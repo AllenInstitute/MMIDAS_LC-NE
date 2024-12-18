@@ -1,0 +1,24 @@
+# -----------------------------------------------------------------------------
+[project]
+name = "LC-NE-MixRep"
+version = "0.1.1"
+requires-python = ">= 3.9"
+#requires-pytorch = ">= 2.0"
+
+readme = "README.md"
+
+# -----------------------------------------------------------------------------
+[paths]
+main_dir = "./"
+saving_path = "results/"
+data_path = "data/"
+
+# -----------------------------------------------------------------------------
+[data]
+anndata_file = "Dbh_cluster.h5ad"
+hvg_seurat = "variable_genes.csv"
+# -----------------------------------------------------------------------------
+[models]
+augmenter = ""
+mmidad = ""
+
