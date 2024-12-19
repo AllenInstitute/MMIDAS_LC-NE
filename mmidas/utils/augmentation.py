@@ -1,10 +1,9 @@
-import torch
-from torch.autograd import Variable
 import torch.nn as nn
 import numpy as np
 import torch.nn.functional as F
+import torch
+from torch.utils.data import DataLoader, TensorDataset
 
-eps = 1e-6
 
 def weights_init(m):
     """
@@ -17,7 +16,7 @@ def weights_init(m):
         nn.init.constant_(m.bias.data, 0)
 
 
-def KL_dist(x1, x2):
+def KL_dist(x1, x2, eps=1e-6):
     """
     Calculate the KL divergence between two univariate Gaussians
     """
@@ -45,17 +44,32 @@ def TripletLoss(anchor, positive, negative, margin=0.2, loss='BCE'):
     return losses.mean()
 
 
-def reparam_trick(mu, std, device):
-    """
-    Generate samples from a normal distribution for reparametrization trick.
 
+def get_loaders(x, batch_size, training=True, eps=1e-2):
+    """
+    Load data from file
     input args
-        mu: mean of the Gaussian distribution for q(s|z,x) = N(mu, sigma^2*I).
-        log_sigma: log of variance of the Gaussian distribution for
-                   q(s|z,x) = N(mu, sigma^2*I).
+        data (dict): data dictionary
+        batch_size (int): batch size
+        training (bool): training or testing
+        eps (float, optional): epsilon value
 
     return
-        a sample from Gaussian distribution N(mu, sigma^2*I).
+        dataloader (DataLoader): data loader
+
     """
-    eps = Variable(torch.cuda.FloatTensor(std.size(), device=device).normal_())
-    return eps.mul(std).add(mu)
+
+    data_bin = np.where(x > eps, 1, 0)
+    data_troch = torch.FloatTensor(x)
+    data_bin_troch = torch.FloatTensor(data_bin)
+    tensor_data = TensorDataset(data_troch, data_bin_troch)
+
+    # Create dataloader.
+    if training:
+        dataloader = DataLoader(tensor_data, batch_size=batch_size, shuffle=True, drop_last=True)
+    else:
+        dataloader = DataLoader(tensor_data, batch_size=batch_size, shuffle=False, drop_last=True)
+
+    print("Dataloader for augmentation created!")
+    return dataloader
+

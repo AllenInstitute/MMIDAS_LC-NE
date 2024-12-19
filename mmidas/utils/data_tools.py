@@ -1,9 +1,13 @@
 import numpy as np
 import scipy.sparse as ss
+import scanpy as sc
 from sklearn.preprocessing import normalize
 from sklearn.feature_extraction.text import TfidfTransformer
-from scipy import sparse
+import pandas as pd
 from scipy.sparse import issparse
+import torch
+from torch.utils.data import DataLoader, TensorDataset
+from sklearn.model_selection import train_test_split
 
 
 def normalize_cellxgene(x):
@@ -76,6 +80,7 @@ def tfidf(x, scaler=1e4):
     tfidf = TfidfTransformer(norm='l1', use_idf=True)
     return tfidf.fit_transform(x) * scaler
 
+
 def get_HAP(x, thr=0.1, binary=True):
     if binary:
         x_bin = (x != 0).astype(int)
@@ -122,6 +127,113 @@ def split_data_Kfold(class_label, K_fold):
         train_ind[fold] = train_ind[fold][index]
 
     return train_ind, test_ind
+
+
+def load_data(file, gene_file='', n_gene=0):
+
+    adata = sc.read_h5ad(file)
+    data = dict()
+    data['log1p'] = adata.X.toarray()
+    data['gene_id'] = adata.var.index.values
+    
+    if ~np.isempty(gene_file):
+        df_ = pd.read_csv(gene_file)
+        for key in df_.keys():
+            # check key include gene in the name
+            if 'gene' in key.lower():
+                gene_list = df_[key].values
+                break
+        # search gene list in the data
+        gene_index = [np.where(data['gene_id'] == gg)[0][0] for gg in gene_list]
+        data['log1p'] = data['log1p'][:, gene_index]
+        data['gene_id'] = data['gene_id'][gene_index]
+    
+    if n_gene > 0:
+        data['log1p'] = data['log1p'][:, :n_gene]
+        data['gene_id'] = data['gene_id'][:n_gene]
+            
+    print(f"Number of cells: {data['log1p'].shape[0]}, Number of genes: {data['log1p'].shape[1]}")
+
+    return data
+
+
+def get_data(x, train_size, seed=0):
+
+        test_size = x.shape[0] - train_size
+        train_cpm, test_cpm, train_ind, test_ind = train_test_split(x, np.arange(x.shape[0]), train_size=train_size, test_size=test_size, random_state=seed)
+
+        train_cpm, val_cpm, train_ind, val_ind = train_test_split(train_cpm, train_ind, train_size=train_size - test_size, test_size=test_size, random_state=seed)
+
+        return train_cpm, val_cpm, test_cpm, train_ind, val_ind, test_ind
+
+
+def get_loaders(x, label=[], batch_size=128, train_size=0.9, n_aug_smp=0, netA=None, aug_param=0., device=None):
+
+    if len(label) > 0:
+        train_ind, val_ind, test_ind = [], [], []
+        for ll in np.unique(label):
+            indx = np.where(label == ll)[0]
+            tt_size = int(train_size * sum(label == ll))
+            _, _, _, train_subind, val_subind, test_subind = get_data(x, tt_size)
+            train_ind.append(indx[train_subind])
+            val_ind.append(indx[val_subind])
+            test_ind.append(indx[test_subind])
+
+        train_ind = np.concatenate(train_ind)
+        val_ind = np.concatenate(val_ind)
+        test_ind = np.concatenate(test_ind)
+        train_set = x[train_ind, :]
+        val_set = x[val_ind, :]
+        test_set = x[test_ind, :]
+    else:
+        tt_size = int(train_size * x.shape[0])
+        train_set, val_set, test_set, train_ind, val_ind, test_ind = get_data(x, tt_size)
+
+    train_set_torch = torch.FloatTensor(train_set)
+    train_ind_torch = torch.FloatTensor(train_ind)
+    if n_aug_smp > 0:
+        train_set = train_set_torch.clone()
+        train_set_ind = train_ind_torch.clone()
+        for _ in range(n_aug_smp):
+            if netA:
+                noise = 0.1*torch.randn(train_set_torch.shape[0], aug_param['num_n'], device=device)
+                if device:
+                    _, gen_data = netA(train_set_torch.cuda(device), noise, True, device)
+                else:
+                    _, gen_data = netA(train_set_torch, noise, True, device)
+                data_bin = 0. * train_set_torch
+                data_bin[train_set_torch > 1e-4] = 1.
+                fake_data = gen_data * data_bin
+                train_set = torch.cat((train_set, fake_data.cpu().detach()), 0)
+
+            else:
+                train_set = torch.cat((train_set, train_set_torch), 0)
+                
+            train_set_ind = torch.cat((train_set_ind, train_ind_torch), 0)
+
+        train_data = TensorDataset(train_set, train_set_ind)
+    else:
+        train_data = TensorDataset(train_set_torch, train_ind_torch)
+
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, drop_last=True, pin_memory=True)
+
+    val_set_torch = torch.FloatTensor(val_set)
+    val_ind_torch = torch.FloatTensor(val_ind)
+    validation_data = TensorDataset(val_set_torch, val_ind_torch)
+    validation_loader = DataLoader(validation_data, batch_size=batch_size, shuffle=True, drop_last=False, pin_memory=True)
+
+    test_set_torch = torch.FloatTensor(test_set)
+    test_ind_torch = torch.FloatTensor(test_ind)
+    test_data = TensorDataset(test_set_torch, test_ind_torch)
+    test_loader = DataLoader(test_data, batch_size=1, shuffle=True, drop_last=False, pin_memory=True)
+
+    data_set_troch = torch.FloatTensor(x)
+    all_ind_torch = torch.FloatTensor(range(x.shape[0]))
+    all_data = TensorDataset(data_set_troch, all_ind_torch)
+    alldata_loader = DataLoader(all_data, batch_size=batch_size, shuffle=False, drop_last=False, pin_memory=True)
+
+    return alldata_loader, train_loader, validation_loader, test_loader, val_ind, test_ind
+
 
 
 

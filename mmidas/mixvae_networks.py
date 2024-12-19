@@ -6,7 +6,7 @@ from torch.autograd import Variable
 from torch.nn import functional as F
 
 
-class mixVAE_model(nn.Module):
+class RNA_RNA_mixVAE(nn.Module):
     """
     Class for the neural network module for mixture of continuous and
     discrete random variables. The module contains an VAE using
@@ -54,7 +54,7 @@ class mixVAE_model(nn.Module):
             ref_prior: a boolean variable, True uses the reference prior for the categorical variable.
             loss_mode: string, define the reconstruction loss function, either MSE or ZINB.
         """
-        super(mixVAE_model, self).__init__()
+        super().__init__()
         self.input_dim = input_dim
         self.fc_dim = fc_dim
         self.state_dim = state_dim

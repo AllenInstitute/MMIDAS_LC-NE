@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import time, os
 from mmidas.augmentation.udagan import *
 from mmidas.augmentation.dataloader import get_data
-from mmidas.augmentation.aug_utils import *
+from mmidas.utils.augmentation import *
 # from module.model_sprites import *
 
 eps = 1e-8

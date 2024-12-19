@@ -1,15 +1,12 @@
 import pickle
 import numpy as np
-from sklearn.metrics.cluster import adjusted_rand_score
 import time
 import torch
 from torch.autograd import Variable
 import torch.nn.utils.prune as prune
-from torch.utils.data import DataLoader, TensorDataset
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from .augmentation.udagan import *
-from .nn_model import mixVAE_model
+from .aug_networks import RNA_augmenter as Augmenter
+from .mixvae_networks import RNA_RNA_mixVAE as mixVAE_model
 
 
 class cpl_mixVAE:
