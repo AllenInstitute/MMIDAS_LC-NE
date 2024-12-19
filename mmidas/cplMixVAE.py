@@ -5,8 +5,8 @@ import torch
 from torch.autograd import Variable
 import torch.nn.utils.prune as prune
 import matplotlib.pyplot as plt
-from .aug_networks import RNA_augmenter as Augmenter
-from .mixvae_networks import RNA_RNA_mixVAE as mixVAE_model
+from .networks_aug import RNA_augmenter as Augmenter
+from .networks_mixvae import RNA_RNA_mixVAE as mixVAE_model
 
 
 class cpl_mixVAE:
