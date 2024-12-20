@@ -120,19 +120,15 @@ def main(n_categories,
                         mode=training_mode,
                         trained_model=pre_trained_model,
                         n_pr=n_prun_c)
-
-    k = 1
     
 
-    # mixvae.run(train_loader=train_loader,
-    #             test_loader=test_loader,
-    #             validation_loader=test_loader,
-    #             n_epoch=n_epoch,
-    #             n_epoch_p=n_epoch_p,
-    #             c_onehot=data['c_onehot'],
-    #             c_p=data['c_p'],
-    #             min_con=min_con,
-    #             max_prun_it=max_prun_it)
+    mixvae.run(train_loader=train_loader,
+                test_loader=test_loader,
+                validation_loader=test_loader,
+                n_epoch=n_epoch,
+                n_epoch_p=n_epoch_p,
+                min_con=min_con,
+                max_prun_it=max_prun_it)
     
 
 if __name__ == "__main__":
