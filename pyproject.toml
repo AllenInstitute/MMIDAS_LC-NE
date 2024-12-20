@@ -12,13 +12,16 @@ readme = "README.md"
 main_dir = "./"
 saving_path = "results/"
 data_path = "data/"
+models = "models/"
 
 # -----------------------------------------------------------------------------
 [data]
 anndata_file = "Dbh_cluster.h5ad"
+hvg_file = "high_var_genes_perbatch.csv"
 hvg_seurat = "variable_genes.csv"
+
 # -----------------------------------------------------------------------------
 [models]
 augmenter = ""
-mmidad = ""
+mixvae = ""
 
