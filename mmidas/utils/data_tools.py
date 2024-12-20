@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 
 
+
 def normalize_cellxgene(x):
     """Normalize based on number of input genes
 
@@ -25,6 +26,7 @@ def normalize_cellxgene(x):
     return normalize(x, axis=1, norm='l1')
 
 
+
 def logcpm(x, scaler=1e4) -> np.array:
     """ Log CPM normalization
 
@@ -38,10 +40,12 @@ def logcpm(x, scaler=1e4) -> np.array:
     return np.log1p(normalize_cellxgene(x) * scaler)
 
 
+
 def sparse_std(x, axis=None):
     x_ = x.copy()
     x_.data **= 2
     return np.sqrt(x_.mean(axis) - np.square(x.mean(axis)))
+
 
 
 def reorder_genes(x, eps, chunksize=1000):
@@ -66,6 +70,7 @@ def reorder_genes(x, eps, chunksize=1000):
     return g_ind[::-1]
 
 
+
 def get_HVG(x, thr=0.1, binary=True):
     if binary:
         x_bin = (x != 0).astype(int)
@@ -76,9 +81,11 @@ def get_HVG(x, thr=0.1, binary=True):
     return np.asarray(g_index).flatten()
 
 
+
 def tfidf(x, scaler=1e4):
     tfidf = TfidfTransformer(norm='l1', use_idf=True)
     return tfidf.fit_transform(x) * scaler
+
 
 
 def get_HAP(x, thr=0.1, binary=True):
@@ -90,6 +97,7 @@ def get_HAP(x, thr=0.1, binary=True):
 
     colsum = colsum.reshape(-1)
     return np.logical_and((colsum > x.shape[0] * thr), (colsum < x.shape[0] * (1 - thr)))
+
 
 
 def split_data_Kfold(class_label, K_fold):
@@ -129,6 +137,7 @@ def split_data_Kfold(class_label, K_fold):
     return train_ind, test_ind
 
 
+
 def load_data(file, gene_file='', n_gene=0):
 
     adata = sc.read_h5ad(file)
@@ -136,7 +145,7 @@ def load_data(file, gene_file='', n_gene=0):
     data['log1p'] = adata.X.toarray()
     data['gene_id'] = adata.var.index.values
     
-    if ~np.isempty(gene_file):
+    if not gene_file:
         df_ = pd.read_csv(gene_file)
         for key in df_.keys():
             # check key include gene in the name
@@ -157,37 +166,47 @@ def load_data(file, gene_file='', n_gene=0):
     return data
 
 
-def get_data(x, train_size, seed=0):
+
+def get_data(x, train_size, additional_val, seed=0):
 
         test_size = x.shape[0] - train_size
         train_cpm, test_cpm, train_ind, test_ind = train_test_split(x, np.arange(x.shape[0]), train_size=train_size, test_size=test_size, random_state=seed)
-
-        train_cpm, val_cpm, train_ind, val_ind = train_test_split(train_cpm, train_ind, train_size=train_size - test_size, test_size=test_size, random_state=seed)
+        
+        if additional_val:
+            train_cpm, val_cpm, train_ind, val_ind = train_test_split(train_cpm, train_ind, train_size=train_size - test_size, test_size=test_size, random_state=seed)
+        else:
+            val_cpm = []
+            val_ind = []
 
         return train_cpm, val_cpm, test_cpm, train_ind, val_ind, test_ind
 
 
-def get_loaders(x, label=[], batch_size=128, train_size=0.9, n_aug_smp=0, netA=None, aug_param=0., device=None):
+
+def get_loaders(x, label=[], batch_size=128, train_size=0.9, n_aug_smp=0, netA=None, aug_param=0., device=None, additional_val=False):
 
     if len(label) > 0:
         train_ind, val_ind, test_ind = [], [], []
         for ll in np.unique(label):
             indx = np.where(label == ll)[0]
             tt_size = int(train_size * sum(label == ll))
-            _, _, _, train_subind, val_subind, test_subind = get_data(x, tt_size)
+            _, _, _, train_subind, val_subind, test_subind = get_data(x, tt_size, additional_val)
             train_ind.append(indx[train_subind])
-            val_ind.append(indx[val_subind])
             test_ind.append(indx[test_subind])
+            if additional_val:
+                val_ind.append(indx[val_subind])
 
         train_ind = np.concatenate(train_ind)
-        val_ind = np.concatenate(val_ind)
         test_ind = np.concatenate(test_ind)
         train_set = x[train_ind, :]
-        val_set = x[val_ind, :]
         test_set = x[test_ind, :]
+        
+        if additional_val:
+            val_ind = np.concatenate(val_ind)
+            val_set = x[val_ind, :]
+        
     else:
         tt_size = int(train_size * x.shape[0])
-        train_set, val_set, test_set, train_ind, val_ind, test_ind = get_data(x, tt_size)
+        train_set, val_set, test_set, train_ind, val_ind, test_ind = get_data(x, tt_size, additional_val)
 
     train_set_torch = torch.FloatTensor(train_set)
     train_ind_torch = torch.FloatTensor(train_ind)
@@ -217,11 +236,6 @@ def get_loaders(x, label=[], batch_size=128, train_size=0.9, n_aug_smp=0, netA=N
 
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, drop_last=True, pin_memory=True)
 
-    val_set_torch = torch.FloatTensor(val_set)
-    val_ind_torch = torch.FloatTensor(val_ind)
-    validation_data = TensorDataset(val_set_torch, val_ind_torch)
-    validation_loader = DataLoader(validation_data, batch_size=batch_size, shuffle=True, drop_last=False, pin_memory=True)
-
     test_set_torch = torch.FloatTensor(test_set)
     test_ind_torch = torch.FloatTensor(test_ind)
     test_data = TensorDataset(test_set_torch, test_ind_torch)
@@ -231,8 +245,17 @@ def get_loaders(x, label=[], batch_size=128, train_size=0.9, n_aug_smp=0, netA=N
     all_ind_torch = torch.FloatTensor(range(x.shape[0]))
     all_data = TensorDataset(data_set_troch, all_ind_torch)
     alldata_loader = DataLoader(all_data, batch_size=batch_size, shuffle=False, drop_last=False, pin_memory=True)
+    
+    if additional_val:
+        val_set_torch = torch.FloatTensor(val_set)
+        val_ind_torch = torch.FloatTensor(val_ind)
+        validation_data = TensorDataset(val_set_torch, val_ind_torch)
+        validation_loader = DataLoader(validation_data, batch_size=batch_size, shuffle=True, drop_last=False, pin_memory=True)
+    else:
+        validation_loader = []
+        val_ind = []
 
-    return alldata_loader, train_loader, validation_loader, test_loader, val_ind, test_ind
+    return alldata_loader, train_loader, test_loader, validation_loader, test_ind, val_ind
 
 
 

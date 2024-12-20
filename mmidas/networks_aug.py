@@ -116,7 +116,7 @@ class RNA_discriminator(nn.Module):
         augmented VAE network.
     """
 
-    def __init__(self, input_dim n_dim, p_drop, momentum):
+    def __init__(self, input_dim, n_dim, p_drop, momentum):
         super().__init__()
 
         self.dp = nn.Dropout(p_drop)
