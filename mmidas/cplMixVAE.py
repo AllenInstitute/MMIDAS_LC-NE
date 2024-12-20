@@ -53,7 +53,7 @@ class cpl_mixVAE:
             self.netA = self.netA.to(self.device)
 
 
-    def init_model(self, n_categories, state_dim, input_dim, fc_dim=100, lowD_dim=10, x_drop=0.5, s_drop=0.2, lr=.001,
+    def init_model(self, n_categories, state_dim, input_dim, fc_dim=100, lowD_dim=10, x_drop=0.5, s_drop=0.2,
                    lam=1, lam_pc=1, n_arm=2, temp=1., tau=0.005, beta=1., hard=False, variational=True, ref_prior=False,
                    trained_model='', n_pr=0, momentum=.01, mode='MSE'):
         """
@@ -67,7 +67,6 @@ class cpl_mixVAE:
             lowD_dim: dimension of the latent representation.
             x_drop: dropout probability at the first (input) layer.
             s_drop: dropout probability of the state variable.
-            lr: the learning rate of the optimizer, here Adam.
             lam: coupling factor in the cpl-mixVAE model.
             lam_pc: coupling factor for the prior categorical variable.
             n_arm: int value that indicates number of arms.
@@ -96,13 +95,13 @@ class cpl_mixVAE:
                                 ref_prior=ref_prior, momentum=momentum, loss_mode=mode)
         
         self.model = self.model.to(self.device)
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
 
         if len(trained_model) > 0:
             print('Load the pre-trained model')
             # if you wish to load another model for evaluation
             loaded_file = torch.load(trained_model, map_location='cpu')
             self.model.load_state_dict(loaded_file['model_state_dict'])
+            self.optimizer = torch.optim.Adam(self.model.parameters())
             self.optimizer.load_state_dict(loaded_file['optimizer_state_dict'])
             self.init = False
             self.n_pr = n_pr
@@ -118,7 +117,7 @@ class cpl_mixVAE:
         self.current_time = time.strftime('%Y-%m-%d-%H-%M-%S')
 
 
-    def train(self, train_loader, test_loader, n_epoch, n_epoch_p, c_p=0, c_onehot=0, min_con=.5, max_prun_it=0):
+    def train(self, train_loader, test_loader, n_epoch, n_epoch_p, lr=1e-3, c_p=0, c_onehot=0, min_con=.5, max_prun_it=0):
         """
         run the training of the cpl-mixVAE with the pre-defined parameters/settings
         pcikle used for saving the file
@@ -128,6 +127,7 @@ class cpl_mixVAE:
             test_loader: test dataloader.
             n_epoch: number of training epoch, without pruning.
             n_epoch_p: number of training epoch, with pruning.
+            lr: the learning rate of the optimizer, here Adam.
             c_p: the prior categorical variable, only if ref_prior is True.
             c_onehot: the one-hot representation of the prior categorical variable, only if ref_prior is True.
             min_con: minimum value of consensus among pair of arms.
@@ -163,6 +163,8 @@ class cpl_mixVAE:
         fc_sigma = fc_sigma.to(self.device)
         f6_mask = f6_mask.to(self.device)
         batch_size = train_loader.batch_size
+        
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
         
         # training the model without pruning
         if self.init:
