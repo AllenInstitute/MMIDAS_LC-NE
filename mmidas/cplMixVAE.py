@@ -99,10 +99,7 @@ class cpl_mixVAE:
         if len(trained_model) > 0:
             print('Load the pre-trained model')
             # if you wish to load another model for evaluation
-            loaded_file = torch.load(trained_model, map_location='cpu')
-            self.model.load_state_dict(loaded_file['model_state_dict'])
-            self.optimizer = torch.optim.Adam(self.model.parameters())
-            self.optimizer.load_state_dict(loaded_file['optimizer_state_dict'])
+            self.load_model(trained_model)
             self.init = False
             self.n_pr = n_pr
         else:
@@ -113,6 +110,8 @@ class cpl_mixVAE:
     def load_model(self, trained_model):
         loaded_file = torch.load(trained_model, map_location='cpu')
         self.model.load_state_dict(loaded_file['model_state_dict'])
+        self.optimizer = torch.optim.Adam(self.model.parameters())
+        self.optimizer.load_state_dict(loaded_file['optimizer_state_dict'])
 
         self.current_time = time.strftime('%Y-%m-%d-%H-%M-%S')
 
