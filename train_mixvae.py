@@ -91,44 +91,48 @@ def main(n_categories,
 
     data = load_data(file=data_file, gene_file=gene_file, n_gene=n_gene) 
 
-    mixvae = cpl_mixVAE(saving_folder=saving_folder,
-                        aug_file=aug_file,
-                        device=device)
+    mixvae = cpl_mixVAE(saving_folder=saving_folder, aug_file=aug_file, device=device)
     
-    _, train_loader, test_loader, _, _, _ = get_loaders(x=data['log1p'], 
+    _, train_loader, test_loader, _, _, _ = get_loaders(
+                                                        x=data['log1p'],
                                                         batch_size=batch_size, 
                                                         n_aug_smp=n_aug_smp, 
-                                                        additional_val=False)
+                                                        additional_val=False,
+                                                        )
 
-    mixvae.init_model(n_categories=n_categories,
-                        state_dim=state_dim,
-                        input_dim=data['log1p'].shape[1],
-                        fc_dim=fc_dim,
-                        lowD_dim=latent_dim,
-                        x_drop=p_drop,
-                        s_drop=s_drop,
-                        lr=lr,
-                        n_arm=n_arm,
-                        temp=temp,
-                        hard=hard,
-                        variational=variational,
-                        tau=tau,
-                        lam=lam,
-                        lam_pc=lam_pc,
-                        beta=beta,
-                        ref_prior=ref_pc,
-                        mode=training_mode,
-                        trained_model=pre_trained_model,
-                        n_pr=n_prun_c)
+    mixvae.init_model(
+                    n_categories=n_categories,
+                    state_dim=state_dim,
+                    input_dim=data['log1p'].shape[1],
+                    fc_dim=fc_dim,
+                    lowD_dim=latent_dim,
+                    x_drop=p_drop,
+                    s_drop=s_drop,
+                    lr=lr,
+                    n_arm=n_arm,
+                    temp=temp,
+                    hard=hard,
+                    variational=variational,
+                    tau=tau,
+                    lam=lam,
+                    lam_pc=lam_pc,
+                    beta=beta,
+                    ref_prior=ref_pc,
+                    mode=training_mode,
+                    trained_model=pre_trained_model,
+                    n_pr=n_prun_c,
+                    )
     
 
-    mixvae.run(train_loader=train_loader,
+    mixvae.train(
+                train_loader=train_loader,
                 test_loader=test_loader,
                 validation_loader=test_loader,
                 n_epoch=n_epoch,
                 n_epoch_p=n_epoch_p,
                 min_con=min_con,
-                max_prun_it=max_prun_it)
+                max_prun_it=max_prun_it,
+                )
     
 
 if __name__ == "__main__":
