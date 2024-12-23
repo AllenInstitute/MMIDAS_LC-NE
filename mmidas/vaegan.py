@@ -88,21 +88,36 @@ class vae_gan:
                         'latent_dim': z_dim, 
                         'noise_dim': noise_dim,
                         'fc_dim': fc_dim,
+                        'momentum': momentum,
+                        'affine': affine,
                         }
 
         
         self.netA = self.netA.to(self.device)
         self.netD = self.netD.to(self.device)
         
-        if len(trained_model) > 0:
-            print('Load the pre-trained model')
-            # if you wish to load another model for evaluation
-            self.load_model(trained_model)
+        # if len(trained_model) > 0:
+        #     print('Load the pre-trained model')
+        #     # if you wish to load another model for evaluation
+        #     self.load_model(trained_model)
             
 
     def load_model(self, trained_model):
+        print(f'Load the pre-trained augmenter model - {trained_model}')
         loaded_model = torch.load(trained_model, map_location='cpu')
+        self.aug_param = loaded_model['params']
+        self.netA = Augmenter(
+                            input_dim=self.aug_param['input_dim'], 
+                            latent_dim=self.aug_param['latent_dim'], 
+                            noise_dim=self.aug_param['noise_dim'], 
+                            fc_dim=self.aug_param['fc_dim'], 
+                            p_drop=0., 
+                            momentum=self.aug_param['momentum'], 
+                            affine=self.aug_param['affine'],
+                            eps=self.eps,
+                            )
         self.netA.load_state_dict(loaded_model['netA'])
+        self.netA = self.netA.to(self.device)
 
 
     def train(self, dataloader, n_epoch, lr, alpha, lam):
@@ -240,6 +255,7 @@ class vae_gan:
                     'netD': self.netD.state_dict(),
                     'optimD': self.optimD.state_dict(),
                     'optimA': self.optimA.state_dict(),
+                    'params': self.aug_param,
                     }, 
                     self.folder + filename,
                     )

@@ -5,19 +5,18 @@ import torch
 from torch.autograd import Variable
 import torch.nn.utils.prune as prune
 import matplotlib.pyplot as plt
-from .networks_aug import RNA_augmenter as Augmenter
 from .networks_mixvae import RNA_RNA_mixVAE as mixVAE_model
 
 
 class cpl_mixVAE:
 
-    def __init__(self, saving_folder='', aug_file='', device=None, eps=1e-8, save_flag=True):
+    def __init__(self, saving_folder='', augmenter=[], device=None, eps=1e-8, save_flag=True):
         """
         Initialized the cpl_mixVAE class.
 
         input args:
             saving_folder: a string that indicates the folder to save the model(s) and file(s).
-            aug_file: a string that indicates the file of the pre-trained augmenter.
+            augmentor: the pre-trained augmenter.
             device: computing device, either 'cpu' or 'cuda'.
             eps: a small constant value to fix computation overflow.
             save_flag: a boolean variable, if True, the model is saved.
@@ -26,7 +25,7 @@ class cpl_mixVAE:
         self.eps = eps
         self.save = save_flag
         self.folder = saving_folder
-        self.aug_file = aug_file
+        self.aug = [True if augmenter  else False][0]
         self.device = device
 
         if device is None:
@@ -41,16 +40,8 @@ class cpl_mixVAE:
                 torch.cuda.set_device(self.device)
                 print('--->' + torch.cuda.get_device_name(torch.cuda.current_device()))
 
-        if self.aug_file:
-            self.aug_model = torch.load(self.aug_file)
-            self.aug_param = self.aug_model['parameters']
-            self.netA = Augmenter(noise_dim=self.aug_param['num_n'],
-                                latent_dim=self.aug_param['num_z'],
-                                n_zim=self.aug_param['n_zim'],
-                                input_dim=self.aug_param['n_features'])
-            # Load the trained augmenter weights
-            self.netA.load_state_dict(self.aug_model['netA'])
-            self.netA = self.netA.to(self.device)
+        if self.aug:
+            self.netA = augmenter.to(self.device)
 
 
     def init_model(self, n_categories, state_dim, input_dim, fc_dim=100, lowD_dim=10, x_drop=0.5, s_drop=0.2,
@@ -204,16 +195,9 @@ class cpl_mixVAE:
                     trans_data = []
                     tt = time.time()
                     for arm in range(self.n_arm):
-                        if self.aug_file:
-                            noise = torch.randn(batch_size, self.aug_param['num_n'], device=self.device)
-                            _, gen_data = self.netA(data, noise, True, self.device)
-                            if self.aug_param['n_zim'] > 1:
-                                data_bin = 0. * data
-                                data_bin[data > self.eps] = 1.
-                                fake_data = gen_data[:, :self.aug_param['n_features']] * data_bin
-                                trans_data.append(fake_data)
-                            else:
-                                trans_data.append(gen_data)
+                        if self.aug:
+                            _, gen_data = self.netA(data, True)
+                            trans_data.append(gen_data)
                         else:
                             trans_data.append(data)
 
@@ -484,16 +468,9 @@ class cpl_mixVAE:
                         tt = time.time()
                         w_param, bias_param, activ_param = 0, 0, 0
                         for arm in range(self.n_arm-1):
-                            if self.aug_file:
-                                noise = torch.randn(batch_size, self.aug_param['num_n']).to(self.device)
-                                _, gen_data = self.netA(data, noise, True, self.device)
-                                if self.aug_param['n_zim'] > 1:
-                                    data_bin = 0. * data
-                                    data_bin[data > self.eps] = 1.
-                                    fake_data = gen_data[:, :self.aug_param['n_features']] * data_bin
-                                    trans_data.append(fake_data)
-                                else:
-                                    trans_data.append(gen_data)
+                            if self.aug:
+                                _, gen_data = self.netA(data, True)
+                                trans_data.append(gen_data)
                             else:
                                 trans_data.append(data)
 
