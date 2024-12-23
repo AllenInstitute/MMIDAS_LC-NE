@@ -10,7 +10,7 @@ class RNA_augmenter(nn.Module):
         Class for the neural network module for augmenting the RNA-seq data.
     """
 
-    def __init__(self, noise_dim, latent_dim, input_dim, n_dim, p_drop, momentum, device, eps):
+    def __init__(self, noise_dim, latent_dim, input_dim, fc_dim, p_drop, momentum, affine, eps):
         """
             class instantiation for the Augmenter network.
 
@@ -24,48 +24,49 @@ class RNA_augmenter(nn.Module):
         """
         super().__init__()
 
-        self.device = device
         self.eps = eps
         self.dp = nn.Dropout(p_drop)
+        self.noise_dim = noise_dim
 
         # Define layers for the Augmenter network
         self.noise = nn.Linear(noise_dim, noise_dim, bias=False)
         self.bnz = nn.BatchNorm1d(self.noise.out_features)
 
         # Fully connected layers and their batch normalizations
-        self.fc1 = nn.Linear(input_dim, input_dim // 5)
-        self.batch_fc1 = nn.BatchNorm1d(num_features=self.fc1.out_features, eps=eps, momentum=momentum, affine=False)
-        self.fc2 = nn.Linear(self.fc1.out_features, self.fc1.out_features)
-        self.batch_fc2 = nn.BatchNorm1d(num_features=self.fc2.out_features, eps=eps, momentum=momentum, affine=False)
-        self.fc3 = nn.Linear(self.fc1.out_features, n_dim)
-        self.batch_fc3 = nn.BatchNorm1d(num_features=self.fc3.out_features, eps=eps, momentum=momentum, affine=False)
-        self.fc4 = nn.Linear(n_dim, n_dim)
-        self.batch_fc4 = nn.BatchNorm1d(num_features=self.fc4.out_features, eps=eps, momentum=momentum, affine=False)
-        self.fc5 = nn.Linear(n_dim, n_dim // 5)
-        self.batch_fc5 = nn.BatchNorm1d(num_features=self.fc5.out_features, eps=eps, momentum=momentum, affine=False)
-        self.fc5n = nn.Linear(n_dim + noise_dim, n_dim // 5)
-        self.batch_fc5n = nn.BatchNorm1d(num_features=self.fc5n.out_features, eps=eps, momentum=momentum, affine=False)
-        self.fc_mu = nn.Linear(n_dim // 5, latent_dim)
-        self.fc_sigma = nn.Linear(n_dim // 5, latent_dim)
-        self.batch_fc_mu = nn.BatchNorm1d(num_features=self.fc_mu.out_features, eps=eps, momentum=momentum, affine=False)
-        self.fc6 = nn.Linear(self.fc_mu.out_features, n_dim // 5)
-        self.batch_fc6 = nn.BatchNorm1d(num_features=self.fc6.out_features, eps=eps, momentum=momentum, affine=False)
-        self.fc7 = nn.Linear(self.fc6.out_features, n_dim)
-        self.batch_fc7 = nn.BatchNorm1d(num_features=self.fc7.out_features, eps=eps, momentum=momentum, affine=False)
-        self.fc8 = nn.Linear(n_dim, n_dim)
-        self.batch_fc8 = nn.BatchNorm1d(num_features=self.fc8.out_features, eps=eps, momentum=momentum, affine=False)
-        self.fc9 = nn.Linear(n_dim, input_dim // 5)
-        self.batch_fc9 = nn.BatchNorm1d(num_features=self.fc9.out_features, eps=eps, momentum=momentum, affine=False)
-        self.fc10 = nn.Linear(input_dim // 5, input_dim // 5)
-        self.batch_fc10 = nn.BatchNorm1d(num_features=self.fc10.out_features, eps=eps, momentum=momentum, affine=False)
-        self.fc11 = nn.Linear(self.fc10.out_features, input_dim)
+        self.fc1 = nn.Linear(input_dim, 1000)
+        self.batch_fc1 = nn.BatchNorm1d(num_features=self.fc1.out_features, eps=eps, momentum=momentum, affine=affine)
+        # self.fc2 = nn.Linear(self.fc1.out_features, self.fc1.out_features)
+        # self.batch_fc2 = nn.BatchNorm1d(num_features=self.fc2.out_features, eps=eps, momentum=momentum, affine=False)
+        self.fc3 = nn.Linear(1000, fc_dim)
+        self.batch_fc3 = nn.BatchNorm1d(num_features=self.fc3.out_features, eps=eps, momentum=momentum, affine=affine)
+        self.fc4 = nn.Linear(fc_dim, fc_dim)
+        self.batch_fc4 = nn.BatchNorm1d(num_features=self.fc4.out_features, eps=eps, momentum=momentum, affine=affine)
+        self.fc5 = nn.Linear(fc_dim, fc_dim // 5)
+        self.batch_fc5 = nn.BatchNorm1d(num_features=self.fc5.out_features, eps=eps, momentum=momentum, affine=affine)
+        self.fc5n = nn.Linear(fc_dim + noise_dim, fc_dim // 5)
+        self.batch_fc5n = nn.BatchNorm1d(num_features=self.fc5n.out_features, eps=eps, momentum=momentum, affine=affine)
+        self.fc_mu = nn.Linear(fc_dim // 5, latent_dim)
+        self.fc_sigma = nn.Linear(fc_dim // 5, latent_dim)
+        self.batch_fc_mu = nn.BatchNorm1d(num_features=self.fc_mu.out_features, eps=eps, momentum=momentum, affine=affine)
+        self.fc6 = nn.Linear(latent_dim, fc_dim // 5)
+        self.batch_fc6 = nn.BatchNorm1d(num_features=self.fc6.out_features, eps=eps, momentum=momentum, affine=affine)
+        self.fc7 = nn.Linear(self.fc6.out_features, fc_dim)
+        self.batch_fc7 = nn.BatchNorm1d(num_features=self.fc7.out_features, eps=eps, momentum=momentum, affine=affine)
+        # self.fc8 = nn.Linear(fc_dim, fc_dim)
+        # self.batch_fc8 = nn.BatchNorm1d(num_features=self.fc8.out_features, eps=eps, momentum=momentum, affine=False)
+        self.fc9 = nn.Linear(fc_dim, fc_dim)
+        self.batch_fc9 = nn.BatchNorm1d(num_features=self.fc9.out_features, eps=eps, momentum=momentum, affine=affine)
+        self.fc10 = nn.Linear(fc_dim, 1000)
+        self.batch_fc10 = nn.BatchNorm1d(num_features=self.fc10.out_features, eps=eps, momentum=momentum, affine=affine)
+        self.fc11 = nn.Linear(1000, input_dim)
 
-    def forward(self, x, z, noise):
+    def forward(self, x, noise):
         # Apply noise and batch normalization
+        z = torch.randn(x.shape[0], self.noise_dim, device=x.device)
         z = F.elu(self.bnz(self.noise(z)))
         # Apply dropout, fully connected layers, and batch normalization with ReLU activation
         x = F.relu(self.batch_fc1(self.fc1(self.dp(x))))
-        x = F.relu(self.batch_fc2(self.fc2(x)))
+        # x = F.relu(self.batch_fc2(self.fc2(x)))
         x = F.relu(self.batch_fc3(self.fc3(x)))
         x = F.relu(self.batch_fc4(self.fc4(x)))
         
@@ -84,7 +85,7 @@ class RNA_augmenter(nn.Module):
         # Pass through remaining fully connected layers with batch normalization and ReLU activation
         x = F.relu(self.batch_fc6(self.fc6(s)))
         x = F.relu(self.batch_fc7(self.fc7(x)))
-        x = F.relu(self.batch_fc8(self.fc8(x)))
+        # x = F.relu(self.batch_fc8(self.fc8(x)))
         x = F.relu(self.batch_fc9(self.fc9(x)))
         x = F.relu(self.batch_fc10(self.fc10(x)))
         
@@ -105,7 +106,7 @@ class RNA_augmenter(nn.Module):
             a sample from Gaussian distribution N(mu, sigma^2*I).
         """
         std = log_sigma.exp().sqrt()
-        eps = torch.rand_like(std).to(self.device)
+        eps = torch.rand_like(std).to(mu.device)
         return eps.mul(std).add(mu)
 
 
@@ -116,16 +117,16 @@ class RNA_discriminator(nn.Module):
         augmented VAE network.
     """
 
-    def __init__(self, input_dim, n_dim, p_drop, momentum):
+    def __init__(self, input_dim, fc_dim, p_drop, momentum, affine, eps):
         super().__init__()
 
         self.dp = nn.Dropout(p_drop)
 
         # Fully connected layers and their batch normalizations
-        self.fc1 = nn.Linear(input_dim, input_dim // 5)
-        self.batch_fc1 = nn.BatchNorm1d(num_features=self.fc1.out_features, eps=1e-10, momentum=momentum, affine=False)
-        self.fc2 = nn.Linear(self.fc1.out_features, self.fc1.out_features)
-        self.batch_fc2 = nn.BatchNorm1d(num_features=self.fc2.out_features, eps=1e-10, momentum=momentum, affine=False)
+        self.fc1 = nn.Linear(input_dim, 1000)
+        self.batch_fc1 = nn.BatchNorm1d(num_features=self.fc1.out_features, eps=eps, momentum=momentum, affine=affine)
+        self.fc2 = nn.Linear(1000, fc_dim)
+        self.batch_fc2 = nn.BatchNorm1d(num_features=self.fc2.out_features, eps=eps, momentum=momentum, affine=affine)
         self.disc = nn.Linear(self.fc2.out_features, 1, 1)
 
     def forward(self, x):

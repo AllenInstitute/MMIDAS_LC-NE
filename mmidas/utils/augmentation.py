@@ -45,7 +45,7 @@ def TripletLoss(anchor, positive, negative, margin=0.2, loss='BCE'):
 
 
 
-def get_loaders(x, batch_size, training=True, eps=1e-2):
+def get_loader(x, batch_size, training=True, eps=1e-2):
     """
     Load data from file
     input args
@@ -68,7 +68,7 @@ def get_loaders(x, batch_size, training=True, eps=1e-2):
     if training:
         dataloader = DataLoader(tensor_data, batch_size=batch_size, shuffle=True, drop_last=True)
     else:
-        dataloader = DataLoader(tensor_data, batch_size=batch_size, shuffle=False, drop_last=True)
+        dataloader = DataLoader(tensor_data, batch_size=batch_size, shuffle=False, drop_last=False)
 
     print("Dataloader for augmentation created!")
     return dataloader

@@ -145,7 +145,7 @@ def load_data(file, gene_file='', n_gene=0):
     data['log1p'] = adata.X.toarray()
     data['gene_id'] = adata.var.index.values
     
-    if not gene_file:
+    if gene_file:
         df_ = pd.read_csv(gene_file)
         for key in df_.keys():
             # check key include gene in the name
