@@ -1,9 +1,6 @@
 # LC-NE-MixRep
 Learning mixture-based representations of LC-NE neurons, using Mixture Model Inference with Discrete-coupled AutoencoderS (MMIDAS).
 
-# MultiOmix
-MultiOmix is a repository for joint mixture modeling of RNA-seq and ATAC-seq data, enabling integrated analysis of transcriptomic and chromatin accessibility profiles in single-cell studies.
-
 ## Requirements
 - Python >= 3.9
 - PyTorch >= 2.4
