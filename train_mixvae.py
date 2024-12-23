@@ -1,6 +1,7 @@
 import argparse
 import os
 from mmidas.cplMixVAE import cpl_mixVAE
+from mmidas.vaegan import vae_gan
 from mmidas.utils.config_tools import get_paths
 from mmidas.utils.data_tools import load_data, get_loaders
 import numpy as np
@@ -17,18 +18,18 @@ parser.add_argument("--lam",  default=1, type=float, help="coupling factor")
 parser.add_argument("--lam_pc",  default=1000, type=float, help="coupling factor for ref arm")
 parser.add_argument("--ref_pc", default=False, type=bool, help="path of the data augmenter")
 parser.add_argument("--latent_dim", default=10, type=int, help="latent dimension")
-parser.add_argument("--n_epoch", default=10000, type=int, help="Number of epochs to train")
-parser.add_argument("--n_epoch_p", default=10000, type=int, help="Number of epochs to train pruning algorithm")
+parser.add_argument("--n_epoch", default=2, type=int, help="Number of epochs to train")
+parser.add_argument("--n_epoch_p", default=0, type=int, help="Number of epochs to train pruning algorithm")
 parser.add_argument("--min_con", default=.99, type=float, help="minimum consensus")
-parser.add_argument("--max_prun_it", default=14, type=int, help="maximum number of pruning iterations")
+parser.add_argument("--max_prun_it", default=2, type=int, help="maximum number of pruning iterations")
 parser.add_argument("--n_aug_smp", default=0, type=int, help="number of augmented samples")
 parser.add_argument("--fc_dim", default=100, type=int, help="number of nodes at the hidden layers")
 parser.add_argument("--batch_size", default=512, type=int, help="batch size")
 parser.add_argument("--variational", default=True, type=bool, help="enable variational mode")
-parser.add_argument("--augmentation", default=False, type=bool, help="enable VAE-GAN augmentation")
+parser.add_argument("--augmentation", default=True, type=bool, help="enable VAE-GAN augmentation")
 parser.add_argument("--lr", default=.001, type=float, help="learning rate")
 parser.add_argument("--n_gene", default=0., type=int, help="number of genes")
-parser.add_argument("--p_drop", default=0.5, type=float, help="input probability of dropout")
+parser.add_argument("--p_drop", default=0.2, type=float, help="input probability of dropout")
 parser.add_argument("--s_drop", default=0.0, type=float, help="state probability of dropout")
 parser.add_argument("--n_run", default=1, type=int, help="number of the experiment")
 parser.add_argument("--hard", default=False, type=bool, help="hard encoding")
@@ -85,13 +86,16 @@ def main(n_categories,
 
     if augmentation:
         aug_file = config['paths']['main_dir'] / config['paths']['models'] / config['models']['augmenter']
+        aug_vaegan = vae_gan(saving_folder=saving_folder, device=device)
+        aug_vaegan.load_model(aug_file)
+        augmenter = aug_vaegan.netA
     else:
-        aug_file = ''
+        augmenter = []
 
 
     data = load_data(file=data_file, gene_file=gene_file, n_gene=n_gene) 
 
-    mixvae = cpl_mixVAE(saving_folder=saving_folder, aug_file=aug_file, device=device)
+    mixvae = cpl_mixVAE(saving_folder=saving_folder, augmenter=augmenter, device=device)
     
     _, train_loader, test_loader, _, _, _ = get_loaders(
                                                         x=data['log1p'],
@@ -108,7 +112,6 @@ def main(n_categories,
                     lowD_dim=latent_dim,
                     x_drop=p_drop,
                     s_drop=s_drop,
-                    lr=lr,
                     n_arm=n_arm,
                     temp=temp,
                     hard=hard,
@@ -127,9 +130,9 @@ def main(n_categories,
     mixvae.train(
                 train_loader=train_loader,
                 test_loader=test_loader,
-                validation_loader=test_loader,
                 n_epoch=n_epoch,
                 n_epoch_p=n_epoch_p,
+                lr=lr,
                 min_con=min_con,
                 max_prun_it=max_prun_it,
                 )
