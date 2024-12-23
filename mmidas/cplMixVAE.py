@@ -89,10 +89,27 @@ class cpl_mixVAE:
         self.n_arm = n_arm
         self.fc_dim = fc_dim
         self.ref_prior = ref_prior
-        self.model = mixVAE_model(input_dim=self.input_dim, fc_dim=fc_dim, n_categories=self.n_categories, state_dim=self.state_dim,
-                                lowD_dim=lowD_dim, x_drop=x_drop, s_drop=s_drop, n_arm=self.n_arm, lam=lam, lam_pc=lam_pc,
-                                tau=tau, beta=beta, hard=hard, variational=variational, device=self.device, eps=self.eps,
-                                ref_prior=ref_prior, momentum=momentum, loss_mode=mode)
+        self.model = mixVAE_model(
+                                input_dim=input_dim, 
+                                fc_dim=fc_dim, 
+                                n_categories=n_categories, 
+                                state_dim=state_dim,
+                                lowD_dim=lowD_dim, 
+                                x_drop=x_drop, 
+                                s_drop=s_drop, 
+                                n_arm=n_arm, 
+                                lam=lam, 
+                                lam_pc=lam_pc,
+                                tau=tau, 
+                                beta=beta, 
+                                hard=hard, 
+                                variational=variational, 
+                                device=self.device, 
+                                eps=self.eps,
+                                ref_prior=ref_prior,
+                                momentum=momentum, 
+                                loss_mode=mode,
+                                )
         
         self.model = self.model.to(self.device)
 
