@@ -10,9 +10,9 @@ readme = "README.md"
 # -----------------------------------------------------------------------------
 [paths]
 main_dir = "./"
-saving_path = "results/"
-data_path = "data/"
-models = "models/"
+saving_path = "results"
+data_path = "data"
+models = "models"
 
 # -----------------------------------------------------------------------------
 [data]
@@ -22,6 +22,6 @@ hvg_seurat = "variable_genes.csv"
 
 # -----------------------------------------------------------------------------
 [models]
-augmenter = ""
+augmenter = "RNA_augmenter_2024-12-23-16-55-27.pth"
 mixvae = ""
 
