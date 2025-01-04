@@ -4,7 +4,6 @@ from mmidas.vaegan import vae_gan
 from mmidas.utils.config_tools import get_paths
 from mmidas.utils.data_tools import load_data
 from mmidas.utils.augmentation import get_loader
-import numpy as np
 
 
 parser = argparse.ArgumentParser()
@@ -32,7 +31,6 @@ def main(z_dim, noise_dim, alpha, n_gene, n_epoch, fc_dim, batch_size, affine, l
     
     saving_folder = config['paths']['main_dir'] / config['paths']['models']
     os.makedirs(saving_folder, exist_ok=True)
-    saving_folder = str(saving_folder)
 
     augmenter = vae_gan(saving_folder=saving_folder, device=device)
     augmenter.init_model(
