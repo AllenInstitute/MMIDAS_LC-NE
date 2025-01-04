@@ -196,8 +196,8 @@ class cpl_mixVAE:
                     tt = time.time()
                     for arm in range(self.n_arm):
                         if self.aug:
-                            _, gen_data = self.netA(data, True)
-                            trans_data.append(gen_data)
+                            _, gen_data = self.netA(data, True, .1)
+                            trans_data.append(torch.concat((data, gen_data), 0))
                         else:
                             trans_data.append(data)
 
@@ -470,7 +470,7 @@ class cpl_mixVAE:
                         for arm in range(self.n_arm-1):
                             if self.aug:
                                 _, gen_data = self.netA(data, True)
-                                trans_data.append(gen_data)
+                                trans_data.append(torch.cat((data, gen_data), 0))
                             else:
                                 trans_data.append(data)
 
