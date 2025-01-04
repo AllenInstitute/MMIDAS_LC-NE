@@ -12,16 +12,16 @@ parser.add_argument("--n_categories", default=15, type=int, help="number of cell
 parser.add_argument("--state_dim", default=3, type=int, help="state variable dimension")
 parser.add_argument("--n_arm", default=2, type=int,  help="number of mixVAE arms for each modalities")
 parser.add_argument("--temp",  default=1, type=float, help="gumbel-softmax temperature")
-parser.add_argument("--tau",  default=.005, type=float, help="softmax temperature")
+parser.add_argument("--tau",  default=.05, type=float, help="softmax temperature")
 parser.add_argument("--beta",  default=1, type=float, help="KL regularization parameter")
 parser.add_argument("--lam",  default=1, type=float, help="coupling factor")
-parser.add_argument("--lam_pc",  default=1000, type=float, help="coupling factor for ref arm")
+parser.add_argument("--lam_pc",  default=1, type=float, help="coupling factor for ref arm")
 parser.add_argument("--ref_pc", default=False, type=bool, help="path of the data augmenter")
 parser.add_argument("--latent_dim", default=10, type=int, help="latent dimension")
-parser.add_argument("--n_epoch", default=2, type=int, help="Number of epochs to train")
-parser.add_argument("--n_epoch_p", default=0, type=int, help="Number of epochs to train pruning algorithm")
+parser.add_argument("--n_epoch", default=10000, type=int, help="Number of epochs to train")
+parser.add_argument("--n_epoch_p", default=10000, type=int, help="Number of epochs to train pruning algorithm")
 parser.add_argument("--min_con", default=.99, type=float, help="minimum consensus")
-parser.add_argument("--max_prun_it", default=2, type=int, help="maximum number of pruning iterations")
+parser.add_argument("--max_prun_it", default=13, type=int, help="maximum number of pruning iterations")
 parser.add_argument("--n_aug_smp", default=0, type=int, help="number of augmented samples")
 parser.add_argument("--fc_dim", default=100, type=int, help="number of nodes at the hidden layers")
 parser.add_argument("--batch_size", default=512, type=int, help="batch size")
@@ -85,8 +85,9 @@ def main(n_categories,
     saving_folder = str(saving_folder)
 
     if augmentation:
-        aug_file = config['paths']['main_dir'] / config['paths']['models'] / config['models']['augmenter']
-        aug_vaegan = vae_gan(saving_folder=saving_folder, device=device)
+        aug_path = config['paths']['main_dir'] / config['paths']['models']
+        aug_file = aug_path / config['models']['augmenter']
+        aug_vaegan = vae_gan(saving_folder=aug_path, device=device)
         aug_vaegan.load_model(aug_file)
         augmenter = aug_vaegan.netA
     else:
