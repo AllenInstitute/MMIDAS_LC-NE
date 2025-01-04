@@ -104,7 +104,7 @@ class vae_gan:
 
     def load_model(self, trained_model):
         print(f'Load the pre-trained augmenter model - {trained_model}')
-        loaded_model = torch.load(trained_model, map_location='cpu')
+        loaded_model = torch.load(trained_model, map_location='cpu', weights_only=True)
         self.aug_param = loaded_model['params']
         self.netA = Augmenter(
                             input_dim=self.aug_param['input_dim'], 

@@ -124,7 +124,7 @@ class cpl_mixVAE:
         self.current_time = time.strftime('%Y-%m-%d-%H-%M-%S')
 
 
-    def train(self, train_loader, test_loader, n_epoch, n_epoch_p, lr=1e-3, c_p=0, c_onehot=0, min_con=.5, max_prun_it=0):
+    def train(self, train_loader, test_loader, n_epoch, n_epoch_p, lr=1e-3, c_p=0, c_onehot=0, min_con=.5, max_prun_it=0, n_scale=.1):
         """
         run the training of the cpl-mixVAE with the pre-defined parameters/settings
         pcikle used for saving the file
@@ -139,7 +139,7 @@ class cpl_mixVAE:
             c_onehot: the one-hot representation of the prior categorical variable, only if ref_prior is True.
             min_con: minimum value of consensus among pair of arms.
             max_prun_it: maximum number of pruning iterations.
-            mode: the loss function, either 'MSE' or 'ZINB'.
+            n_scale: the scale of noise in the augmented data.
 
         return
             data_file_id: the output dictionary.
@@ -196,7 +196,7 @@ class cpl_mixVAE:
                     tt = time.time()
                     for arm in range(self.n_arm):
                         if self.aug:
-                            _, gen_data = self.netA(data, True, .1)
+                            _, gen_data = self.netA(data, True, n_scale)
                             trans_data.append(torch.concat((data, gen_data), 0))
                         else:
                             trans_data.append(data)
@@ -463,14 +463,12 @@ class cpl_mixVAE:
                         data_bin = 0. * data
                         data_bin[data > 0.] = 1.
                         trans_data = []
-                        origin_data = []
-                        trans_data.append(data)
                         tt = time.time()
                         w_param, bias_param, activ_param = 0, 0, 0
-                        for arm in range(self.n_arm-1):
+                        for arm in range(self.n_arm):
                             if self.aug:
-                                _, gen_data = self.netA(data, True)
-                                trans_data.append(torch.cat((data, gen_data), 0))
+                                _, gen_data = self.netA(data, True, n_scale)
+                                trans_data.append(torch.concat((data, gen_data), 0))
                             else:
                                 trans_data.append(data)
 
