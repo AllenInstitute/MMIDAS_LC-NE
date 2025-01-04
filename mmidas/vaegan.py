@@ -248,7 +248,7 @@ class vae_gan:
 
         print("-" * 50)
         # Save trained models
-        filename = '/RNA_augmenter_' + self.current_time + '.pth'
+        filename = 'RNA_augmenter_' + self.current_time + '.pth'
         torch.save(
                     {
                     'netA': self.netA.state_dict(),
@@ -257,7 +257,7 @@ class vae_gan:
                     'optimA': self.optimA.state_dict(),
                     'params': self.aug_param,
                     }, 
-                    self.folder + filename,
+                    self.folder / filename,
                     )
 
         # Plot the training losses.
@@ -268,7 +268,31 @@ class vae_gan:
         plt.xlabel("Iterations")
         plt.ylabel("Loss")
         plt.legend()
-        plt.savefig(self.folder + '/loss_curve.png')
+        plt.savefig(self.folder / 'loss_curve.png')
+        
+    
+    def sample_generator(self, dataloader, noise=True, scale=1., exclude_zeros=True):
+        """
+        Sample from the generator network.
+
+        input args:
+            data_loader: the data loader.
+            noise: if True, the noise is added to the samples.
+            exclude_zeros: if True, the zeros are excluded from the augmentation process.
+
+        return:
+            augmented_samples: the generated samples.
+        """
+        augmented_samples = []
+        
+        for _, (data, data_bin) in enumerate(dataloader):
+            _, samples = self.netA(data, noise, scale)
+            if exclude_zeros:
+                samples = samples * data_bin
+            
+            augmented_samples.append(samples.detach().cpu().numpy())
+
+        return np.concatenate(augmented_samples)
 
             
             

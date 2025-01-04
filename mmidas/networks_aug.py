@@ -60,9 +60,9 @@ class RNA_augmenter(nn.Module):
         self.batch_fc10 = nn.BatchNorm1d(num_features=self.fc10.out_features, eps=eps, momentum=momentum, affine=affine)
         self.fc11 = nn.Linear(1000, input_dim)
 
-    def forward(self, x, noise):
+    def forward(self, x, noise, scale=1.):
         # Apply noise and batch normalization
-        z = torch.randn(x.shape[0], self.noise_dim, device=x.device)
+        z = scale * torch.randn(x.shape[0], self.noise_dim, device=x.device)
         z = F.elu(self.bnz(self.noise(z)))
         # Apply dropout, fully connected layers, and batch normalization with ReLU activation
         x = F.relu(self.batch_fc1(self.fc1(self.dp(x))))
