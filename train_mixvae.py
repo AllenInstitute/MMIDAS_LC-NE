@@ -1,10 +1,11 @@
 import argparse
 import os
+import torch
+
 from mmidas.cplMixVAE import cpl_mixVAE
 from mmidas.vaegan import vae_gan
 from mmidas.utils.config_tools import get_paths
 from mmidas.utils.data_tools import load_data, get_loaders
-import numpy as np
 
 
 parser = argparse.ArgumentParser()
@@ -16,7 +17,7 @@ parser.add_argument("--tau",  default=.05, type=float, help="softmax temperature
 parser.add_argument("--beta",  default=1, type=float, help="KL regularization parameter")
 parser.add_argument("--lam",  default=1, type=float, help="coupling factor")
 parser.add_argument("--lam_pc",  default=1, type=float, help="coupling factor for ref arm")
-parser.add_argument("--ref_pc", default=False, type=bool, help="path of the data augmenter")
+parser.add_argument("--ref_pc", default=False, action="store_true", help="using reference arm")
 parser.add_argument("--latent_dim", default=10, type=int, help="latent dimension")
 parser.add_argument("--n_epoch", default=10000, type=int, help="Number of epochs to train")
 parser.add_argument("--n_epoch_p", default=10000, type=int, help="Number of epochs to train pruning algorithm")
@@ -24,23 +25,24 @@ parser.add_argument("--min_con", default=.99, type=float, help="minimum consensu
 parser.add_argument("--max_prun_it", default=13, type=int, help="maximum number of pruning iterations")
 parser.add_argument("--n_aug_smp", default=0, type=int, help="number of augmented samples")
 parser.add_argument("--fc_dim", default=100, type=int, help="number of nodes at the hidden layers")
-parser.add_argument("--batch_size", default=512, type=int, help="batch size")
-parser.add_argument("--variational", default=True, type=bool, help="enable variational mode")
-parser.add_argument("--augmentation", default=True, type=bool, help="enable VAE-GAN augmentation")
+parser.add_argument("--batch_size", default=256, type=int, help="batch size")
+parser.add_argument("--variational", default=True, help="enable variational mode")
+parser.add_argument("--augmentation", default=False, action="store_true", help="enable VAE-GAN augmentation")
 parser.add_argument("--lr", default=.001, type=float, help="learning rate")
 parser.add_argument("--n_gene", default=0., type=int, help="number of genes")
 parser.add_argument("--p_drop", default=0.2, type=float, help="input probability of dropout")
 parser.add_argument("--s_drop", default=0.0, type=float, help="state probability of dropout")
 parser.add_argument("--n_run", default=1, type=int, help="number of the experiment")
-parser.add_argument("--hard", default=False, type=bool, help="hard encoding")
+parser.add_argument("--hard", default=False, action="store_true", help="hard encoding")
 parser.add_argument("--pre_trained_model", default='', type=str, help="pre-trained model")
 parser.add_argument("--n_prun_c", default=0, type=int, help="number of prunned categories")
 parser.add_argument("--training_mode", default='MSE', type=str, help="mode of the reconstruction loss: MSE or ZINB")
-parser.add_argument("--device", default=None, type=int, help="gpu device, use None for cpu")
+parser.add_argument("--cuda", default=False, action="store_true", help="gpu device, use None for cpu")
 parser.add_argument("--toml_file", default='pyproject.toml', type=str, help="the project toml file")
 
 
-def main(n_categories, 
+def main(
+        n_categories, 
         n_arm, 
         state_dim, 
         latent_dim, 
@@ -69,7 +71,8 @@ def main(n_categories,
         pre_trained_model,
         n_prun_c,
         training_mode,
-        toml_file):
+        toml_file,
+        ):
 
     config = get_paths(toml_file=toml_file)
     data_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['anndata_file']
@@ -83,6 +86,21 @@ def main(n_categories,
     os.makedirs(saving_folder, exist_ok=True)
     os.makedirs(saving_folder / 'model', exist_ok=True)
     saving_folder = str(saving_folder)
+    
+    if cuda==False:
+        device = torch.device("cpu")
+    
+    else:
+        free_gpus = []
+        for i in range(torch.cuda.device_count()):
+            if torch.cuda.get_device_properties(i).total_memory - torch.cuda.memory_allocated(i) > 0:
+                free_gpus.append(i)
+        if free_gpus:
+            device = torch.device(f"cuda:{free_gpus[0]}")
+        else:
+            raise RuntimeError("No free GPU devices available.")
+    
+    mixvae = cpl_mixVAE(saving_folder=saving_folder, augmenter=augmenter, device=device)
 
     if augmentation:
         aug_path = config['paths']['main_dir'] / config['paths']['models']
