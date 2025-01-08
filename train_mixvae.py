@@ -37,7 +37,7 @@ parser.add_argument("--hard", default=False, action="store_true", help="hard enc
 parser.add_argument("--pre_trained_model", default='', type=str, help="pre-trained model")
 parser.add_argument("--n_prun_c", default=0, type=int, help="number of prunned categories")
 parser.add_argument("--training_mode", default='MSE', type=str, help="mode of the reconstruction loss: MSE or ZINB")
-parser.add_argument("--cuda", default=False, action="store_true", help="gpu device, use None for cpu")
+parser.add_argument("--cuda", default=False, action="store_true", help="enable cuda (gpu device)")
 parser.add_argument("--toml_file", default='pyproject.toml', type=str, help="the project toml file")
 
 
@@ -58,7 +58,7 @@ def main(
         lr, 
         temp, 
         n_run, 
-        device, 
+        cuda, 
         hard, 
         tau, 
         variational, 
@@ -78,8 +78,8 @@ def main(
     data_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['anndata_file']
     gene_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['hvg_file']
     
-    folder_name = f'run_{n_run}_K_{n_categories}_Sdim_{state_dim}_p_drop_{p_drop}_fc_dim_{fc_dim}_aug_{augmentation}' + \
-                  f'_lr_{lr}_n_arm_{n_arm}_tau_{tau}_nbatch_{batch_size}_nepoch_{n_epoch}_nepochP_{n_epoch_p}'
+    folder_name = f'run_{n_run}_Cdim_{n_categories}_Sdim_{state_dim}_Zdim_{latent_dim}_pdrop_{p_drop}_fcdim_{fc_dim}_aug_{augmentation}' + \
+                  f'_lr_{lr}_narm_{n_arm}_tau_{tau}_nbatch_{batch_size}_nepoch_{n_epoch}_nepochP_{n_epoch_p}'
     
     saving_folder = config['paths']['main_dir'] / config['paths']['saving_path']
     saving_folder = saving_folder / folder_name
@@ -87,10 +87,7 @@ def main(
     os.makedirs(saving_folder / 'model', exist_ok=True)
     saving_folder = str(saving_folder)
     
-    if cuda==False:
-        device = torch.device("cpu")
-    
-    else:
+    if cuda:
         free_gpus = []
         for i in range(torch.cuda.device_count()):
             if torch.cuda.get_device_properties(i).total_memory - torch.cuda.memory_allocated(i) > 0:
@@ -99,6 +96,9 @@ def main(
             device = torch.device(f"cuda:{free_gpus[0]}")
         else:
             raise RuntimeError("No free GPU devices available.")
+    else:
+        device = torch.device("cpu")
+        
     
     mixvae = cpl_mixVAE(saving_folder=saving_folder, augmenter=augmenter, device=device)
 
