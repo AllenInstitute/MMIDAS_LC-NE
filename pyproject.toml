@@ -23,5 +23,4 @@ hvg_seurat = "variable_genes.csv"
 # -----------------------------------------------------------------------------
 [models]
 augmenter = "RNA_augmenter_2024-12-23-16-55-27.pth"
-mixvae = ""
 
