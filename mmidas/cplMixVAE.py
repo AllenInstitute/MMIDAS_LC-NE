@@ -44,7 +44,7 @@ class cpl_mixVAE:
             self.netA = augmenter.to(self.device)
 
 
-    def init_model(self, n_categories, state_dim, input_dim, fc_dim=100, lowD_dim=10, x_drop=0.5, s_drop=0.2,
+    def init_model(self, n_categories, state_dim, input_dim, fc_dim=100, lowD_dim=10, x_drop=0., s_drop=0.,
                    lam=1, lam_pc=1, n_arm=2, temp=1., tau=0.005, beta=1., hard=False, variational=True, ref_prior=False,
                    trained_model='', n_pr=0, momentum=.01, mode='MSE'):
         """
@@ -116,12 +116,10 @@ class cpl_mixVAE:
 
 
     def load_model(self, trained_model):
-        loaded_file = torch.load(trained_model, map_location='cpu')
+        loaded_file = torch.load(trained_model, map_location='cpu', weights_only=True)
         self.model.load_state_dict(loaded_file['model_state_dict'])
         self.optimizer = torch.optim.Adam(self.model.parameters())
         self.optimizer.load_state_dict(loaded_file['optimizer_state_dict'])
-
-        self.current_time = time.strftime('%Y-%m-%d-%H-%M-%S')
 
 
     def train(self, train_loader, test_loader, n_epoch, n_epoch_p, lr=1e-3, c_p=0, c_onehot=0, min_con=.5, max_prun_it=0, n_scale=.1):
@@ -392,7 +390,7 @@ class cpl_mixVAE:
             # consensus among arms for each pair of arms 
             c_agreement = np.mean(c_agreement, axis=0)
             agreement = c_agreement[pruning_mask]
-            if (np.min(agreement) <= min_con) and pr < max_prun_it:
+            if pr < max_prun_it: # (np.min(agreement) <= min_con) and 
                 if pr > 0:
                     ind_min = pruning_mask[np.argmin(agreement)]
                     ind_min = np.array([ind_min])

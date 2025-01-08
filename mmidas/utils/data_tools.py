@@ -1,10 +1,13 @@
 import numpy as np
 import scipy.sparse as ss
 import scanpy as sc
+import seaborn as sns
 from sklearn.preprocessing import normalize
+import matplotlib.colors as mcolors
 from sklearn.feature_extraction.text import TfidfTransformer
 import pandas as pd
 from scipy.sparse import issparse
+import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
@@ -99,6 +102,16 @@ def get_HAP(x, thr=0.1, binary=True):
     return np.logical_and((colsum > x.shape[0] * thr), (colsum < x.shape[0] * (1 - thr)))
 
 
+def generate_colors(n):
+    # Generate `n` unique colors using the `viridis` colormap
+    # if n <= 10:  # The colorblind palette has 10 colors
+    #     palette = sns.color_palette("colorblind", n)
+    # else:
+    palette = sns.color_palette("hsv", n)  # Use HSV for larger n
+    colors = [mcolors.rgb2hex(color) for color in palette]
+    
+    return np.array(colors)
+
 
 def split_data_Kfold(class_label, K_fold):
     uniq_label = np.unique(class_label)
@@ -160,6 +173,12 @@ def load_data(file, gene_file='', n_gene=0):
     if n_gene > 0:
         data['log1p'] = data['log1p'][:, :n_gene]
         data['gene_id'] = data['gene_id'][:n_gene]
+    
+    for key in adata.obs.keys():
+        data[key] = adata.obs[key].values
+        if key == 'sex':
+            data[key] = np.array([s.split(';')[0] for s in data[key]])
+        
             
     print(f"Number of cells: {data['log1p'].shape[0]}, Number of genes: {data['log1p'].shape[1]}")
 

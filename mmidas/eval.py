@@ -1,6 +1,8 @@
 import numpy as np
+from sklearn.preprocessing import normalize
 import pickle
 import matplotlib.pyplot as plt
+
 
 def summarize_inference(cpl_mixVAE, files, data, saving_folder=''):
     """
@@ -24,7 +26,7 @@ def summarize_inference(cpl_mixVAE, files, data, saving_folder=''):
     n_pruned = []             # Number of pruned categories
     consensus_min = []        # Minimum consensus value
     consensus_mean = []       # Mean consensus value
-    test_loss = [[]]          # Test loss for each arm
+    test_loss = [[] for a in range(cpl_mixVAE.n_arm)]         # Test loss for each arm
     prune_indx = []           # Pruned indices
     consensus = []            # Consensus matrix
     AvsB = []                 # ArmA vs. ArmB comparison
@@ -76,14 +78,7 @@ def summarize_inference(cpl_mixVAE, files, data, saving_folder=''):
                 for samp in range(pred_a.shape[0]):
                     armA_vs_armB[pred_a[samp].astype(int) - 1, pred_b[samp].astype(int) - 1] += 1
 
-                num_samp_arm = []
-                for ij in range(cpl_mixVAE.n_categories):
-                    sum_row = armA_vs_armB[ij, :].sum()
-                    sum_column = armA_vs_armB[:, ij].sum()
-                    num_samp_arm.append(max(sum_row, sum_column))
-
-                armA_vs_armB_norm = np.divide(armA_vs_armB, np.array(num_samp_arm), out=np.zeros_like(armA_vs_armB),
-                                         where=np.array(num_samp_arm) != 0)
+                armA_vs_armB_norm = normalize(armA_vs_armB, axis=1, norm='l1')
                 nprune_indx = np.where(np.isin(range(cpl_mixVAE.n_categories), prune_indx[i]) == False)[0]
                 armA_vs_armB_norm = armA_vs_armB_norm[:, nprune_indx][nprune_indx]
                 armA_vs_armB = armA_vs_armB[:, nprune_indx][nprune_indx]
