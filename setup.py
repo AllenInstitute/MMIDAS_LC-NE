@@ -1,5 +1,7 @@
 from setuptools import setup, find_packages
 
+# Try <rm -rf build dist *.egg-info> to remove any build artifacts before running setup.py
+
 setup(
     name="mmidas",
     version="0.1.1",
@@ -10,5 +12,5 @@ setup(
     install_requires=[],
     keywords=['VAE', 'latent representation', 'single-cell', 'unimodal', 'multiodal', 'mixture model', 'coupled model'],
     classifiers=["Programming Language :: Python :: 3"],
-    python_requires='>=3.9'
-)
+    python_requires='>=3.9',
+    )
