@@ -166,9 +166,17 @@ def load_data(file, gene_file='', n_gene=0):
                 gene_list = df_[key].values
                 break
         # search gene list in the data
-        gene_index = [np.where(data['gene_id'] == gg)[0][0] for gg in gene_list]
-        data['log1p'] = data['log1p'][:, gene_index]
-        data['gene_id'] = data['gene_id'][gene_index]
+        gene_index = []
+        for gg in gene_list:
+            if gg not in data['gene_id']:
+                print(f"Gene {gg} not found in the data")
+            else:
+                gene_index.append(np.where(data['gene_id'] == gg)[0][0])
+        data['log1p'] = data['log1p'][:, np.array(gene_index)]
+        data['gene_id'] = data['gene_id'][np.array(gene_index)]
+        # gene_index = [np.where(data['gene_id'] == gg)[0][0] for gg in gene_list]
+        # data['log1p'] = data['log1p'][:, gene_index]
+        # data['gene_id'] = data['gene_id'][gene_index]
     
     if n_gene > 0:
         data['log1p'] = data['log1p'][:, :n_gene]
