@@ -33,7 +33,7 @@ class RNA_augmenter(nn.Module):
         self.bnz = nn.BatchNorm1d(self.noise.out_features)
 
         # Fully connected layers and their batch normalizations
-        self.fc1 = nn.Linear(input_dim, 1000)
+        self.fc1 = nn.Linear(input_dim, fc_dim)
         self.batch_fc1 = nn.BatchNorm1d(num_features=self.fc1.out_features, eps=eps, momentum=momentum, affine=affine)
         # self.fc2 = nn.Linear(self.fc1.out_features, self.fc1.out_features)
         # self.batch_fc2 = nn.BatchNorm1d(num_features=self.fc2.out_features, eps=eps, momentum=momentum, affine=False)
@@ -58,7 +58,7 @@ class RNA_augmenter(nn.Module):
         self.batch_fc9 = nn.BatchNorm1d(num_features=self.fc9.out_features, eps=eps, momentum=momentum, affine=affine)
         self.fc10 = nn.Linear(fc_dim, 1000)
         self.batch_fc10 = nn.BatchNorm1d(num_features=self.fc10.out_features, eps=eps, momentum=momentum, affine=affine)
-        self.fc11 = nn.Linear(1000, input_dim)
+        self.fc11 = nn.Linear(fc_dim, input_dim)
 
     def forward(self, x, noise, scale=1.):
         # Apply noise and batch normalization
@@ -67,7 +67,7 @@ class RNA_augmenter(nn.Module):
         # Apply dropout, fully connected layers, and batch normalization with ReLU activation
         x = F.relu(self.batch_fc1(self.fc1(self.dp(x))))
         # x = F.relu(self.batch_fc2(self.fc2(x)))
-        x = F.relu(self.batch_fc3(self.fc3(x)))
+        # x = F.relu(self.batch_fc3(self.fc3(x)))
         x = F.relu(self.batch_fc4(self.fc4(x)))
         
         # If noise is enabled, concatenate with z and pass through another layer
@@ -87,7 +87,7 @@ class RNA_augmenter(nn.Module):
         x = F.relu(self.batch_fc7(self.fc7(x)))
         # x = F.relu(self.batch_fc8(self.fc8(x)))
         x = F.relu(self.batch_fc9(self.fc9(x)))
-        x = F.relu(self.batch_fc10(self.fc10(x)))
+        # x = F.relu(self.batch_fc10(self.fc10(x)))
         
         return s, F.relu(self.fc11(x))
         
@@ -123,9 +123,9 @@ class RNA_discriminator(nn.Module):
         self.dp = nn.Dropout(p_drop)
 
         # Fully connected layers and their batch normalizations
-        self.fc1 = nn.Linear(input_dim, 1000)
+        self.fc1 = nn.Linear(input_dim, fc_dim)
         self.batch_fc1 = nn.BatchNorm1d(num_features=self.fc1.out_features, eps=eps, momentum=momentum, affine=affine)
-        self.fc2 = nn.Linear(1000, fc_dim)
+        self.fc2 = nn.Linear(fc_dim, fc_dim)
         self.batch_fc2 = nn.BatchNorm1d(num_features=self.fc2.out_features, eps=eps, momentum=momentum, affine=affine)
         self.disc = nn.Linear(self.fc2.out_features, 1, 1)
 

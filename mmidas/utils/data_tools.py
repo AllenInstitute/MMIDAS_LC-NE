@@ -153,11 +153,6 @@ def split_data_Kfold(class_label, K_fold):
 
 def load_data(file, gene_file='', n_gene=0):
 
-    adata = sc.read_h5ad(file)
-    data = dict()
-    data['log1p'] = adata.X.toarray()
-    data['gene_id'] = adata.var.index.values
-    
     if gene_file:
         df_ = pd.read_csv(gene_file)
         for key in df_.keys():
@@ -165,28 +160,36 @@ def load_data(file, gene_file='', n_gene=0):
             if 'gene' in key.lower():
                 gene_list = df_[key].values
                 break
-        # search gene list in the data
-        gene_index = []
-        for gg in gene_list:
-            if gg not in data['gene_id']:
-                print(f"Gene {gg} not found in the data")
-            else:
-                gene_index.append(np.where(data['gene_id'] == gg)[0][0])
-        data['log1p'] = data['log1p'][:, np.array(gene_index)]
-        data['gene_id'] = data['gene_id'][np.array(gene_index)]
-        # gene_index = [np.where(data['gene_id'] == gg)[0][0] for gg in gene_list]
-        # data['log1p'] = data['log1p'][:, gene_index]
-        # data['gene_id'] = data['gene_id'][gene_index]
+    data = dict()     
+    if isinstance(file, list):
+        X = []
+        for f in file:
+            adata = sc.read_h5ad(f)
+            genes = adata.var.index.values
+            g_index = [np.where(genes == g)[0][0] for g in gene_list if g in genes]
+            X.append(adata.X[:, g_index].toarray())
+        
+        try:
+            data['log1p'] = np.vstack(X)
+            data['gene_id'] = gene_list
+        except:
+            print("--------> Cannot combine dataset! <--------")
+    else:
+        adata = sc.read_h5ad(file)
+        genes = adata.var.index.values
+        g_index = [np.where(genes == g)[0][0] for g in gene_list if g in genes]
+        data['log1p'] = adata.X[:, g_index].toarray()
+        data['gene_id'] = gene_list
     
     if n_gene > 0:
         data['log1p'] = data['log1p'][:, :n_gene]
         data['gene_id'] = data['gene_id'][:n_gene]
     
-    for key in adata.obs.keys():
-        data[key] = adata.obs[key].values
-        if key == 'sex':
-            data[key] = np.array([s.split(';')[0] for s in data[key]])
-        
+    if not isinstance(file, list):
+        for key in adata.obs.keys():
+            data[key] = adata.obs[key].values
+            if key == 'sex':
+                data[key] = np.array([s.split(';')[0] for s in data[key]])
             
     print(f"Number of cells: {data['log1p'].shape[0]}, Number of genes: {data['log1p'].shape[1]}")
 
@@ -194,7 +197,7 @@ def load_data(file, gene_file='', n_gene=0):
 
 
 
-def get_data(x, train_size, additional_val, seed=0):
+def get_data(x, train_size, additional_val):
 
         test_size = x.shape[0] - train_size
         train_cpm, test_cpm, train_ind, test_ind = train_test_split(x, np.arange(x.shape[0]), train_size=train_size, test_size=test_size, random_state=seed)
@@ -209,14 +212,14 @@ def get_data(x, train_size, additional_val, seed=0):
 
 
 
-def get_loaders(x, label=[], batch_size=128, train_size=0.9, n_aug_smp=0, netA=None, aug_param=0., device=None, additional_val=False):
+def get_loaders(x, label=[], batch_size=128, train_size=0.9, n_aug_smp=0, netA=None, aug_param=0., device=None, additional_val=False, seed=0):
 
     if len(label) > 0:
         train_ind, val_ind, test_ind = [], [], []
         for ll in np.unique(label):
             indx = np.where(label == ll)[0]
             tt_size = int(train_size * sum(label == ll))
-            _, _, _, train_subind, val_subind, test_subind = get_data(x, tt_size, additional_val)
+            _, _, _, train_subind, val_subind, test_subind = get_data(x, tt_size, additional_val, seed)
             train_ind.append(indx[train_subind])
             test_ind.append(indx[test_subind])
             if additional_val:
@@ -233,7 +236,7 @@ def get_loaders(x, label=[], batch_size=128, train_size=0.9, n_aug_smp=0, netA=N
         
     else:
         tt_size = int(train_size * x.shape[0])
-        train_set, val_set, test_set, train_ind, val_ind, test_ind = get_data(x, tt_size, additional_val)
+        train_set, val_set, test_set, train_ind, val_ind, test_ind = get_data(x, tt_size, additional_val, seed)
 
     train_set_torch = torch.FloatTensor(train_set)
     train_ind_torch = torch.FloatTensor(train_ind)
