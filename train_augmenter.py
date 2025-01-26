@@ -19,7 +19,7 @@ parser.add_argument("--batch_size", default=512, type=int, help="batch size")
 parser.add_argument("--affine", default=False, action="store_true", help="affine transformation in the batch normalization")
 parser.add_argument("--momentum",  default=0.01, type=float, help="momentum for batch normalization")
 parser.add_argument("--lr", default=1e-3, type=float, help="learning rate")
-parser.add_argument("--p_drop", default=0.2, type=float, help="input probability of dropout")
+parser.add_argument("--p_drop", default=0.25, type=float, help="input probability of dropout")
 parser.add_argument("--cuda", default=False, action="store_true", help="enable cuda (gpu device)")
 parser.add_argument("--toml_file", default='pyproject.toml', type=str, help="the project toml file")
 
@@ -27,9 +27,13 @@ parser.add_argument("--toml_file", default='pyproject.toml', type=str, help="the
 def main(z_dim, noise_dim, alpha, n_gene, n_epoch, fc_dim, batch_size, affine, lr, p_drop, momentum, cuda, toml_file):
 
     config = get_paths(toml_file=toml_file)
-    data_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['anndata_file']
-    gene_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['hvg_file']
-    data = load_data(file=data_file, gene_file=gene_file, n_gene=n_gene) 
+    data_file_1 = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['anndata_file_1']
+    data_file_2 = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['anndata_file_2']
+    data_file_3 = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['anndata_file_3']
+    gene_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['hvg_file_2']
+    
+    data_files = [data_file_1, data_file_2, data_file_3]
+    data = load_data(file=data_files, gene_file=gene_file, n_gene=n_gene) 
     
     saving_folder = config['paths']['main_dir'] / config['paths']['models']
     os.makedirs(saving_folder, exist_ok=True)
