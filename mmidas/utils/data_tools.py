@@ -197,7 +197,7 @@ def load_data(file, gene_file='', n_gene=0):
 
 
 
-def get_data(x, train_size, additional_val):
+def get_data(x, train_size, additional_val, seed):
 
         test_size = x.shape[0] - train_size
         train_cpm, test_cpm, train_ind, test_ind = train_test_split(x, np.arange(x.shape[0]), train_size=train_size, test_size=test_size, random_state=seed)
