@@ -176,10 +176,13 @@ def load_data(file, gene_file='', n_gene=0):
             print("--------> Cannot combine dataset! <--------")
     else:
         adata = sc.read_h5ad(file)
-        genes = adata.var.index.values
-        g_index = [np.where(genes == g)[0][0] for g in gene_list if g in genes]
-        data['log1p'] = adata.X[:, g_index].toarray()
-        data['gene_id'] = gene_list
+        if gene_file:
+            g_index = [np.where(genes == g)[0][0] for g in gene_list if g in genes]
+            data['log1p'] = adata.X[:, g_index].toarray()
+            data['gene_id'] = gene_list
+        else:
+            data['log1p'] = adata.X.toarray()
+            data['gene_id'] = adata.var.index.values
     
     if n_gene > 0:
         data['log1p'] = data['log1p'][:, :n_gene]

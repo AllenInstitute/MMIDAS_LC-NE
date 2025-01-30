@@ -104,7 +104,7 @@ class vae_gan:
 
     def load_model(self, trained_model):
         print(f'Load the pre-trained augmenter model - {trained_model}')
-        loaded_model = torch.load(trained_model, map_location='cpu')
+        loaded_model = torch.load(trained_model, map_location='cpu', weights_only=True)
         self.aug_param = loaded_model['params']
         self.netA = Augmenter(
                             input_dim=self.aug_param['input_dim'], 
@@ -120,7 +120,7 @@ class vae_gan:
         self.netA = self.netA.to(self.device)
 
 
-    def train(self, dataloader, n_epoch, lr, alpha, lam):
+    def train(self, dataloader, n_epoch, lr, alpha, lam, tag):
         """
         run the training of the cpl-mixVAE with the pre-defined parameters/settings
         pcikle used for saving the file
@@ -248,7 +248,7 @@ class vae_gan:
 
         print("-" * 50)
         # Save trained models
-        filename = 'RNA_augmenter_' + self.current_time + '.pth'
+        filename = f'RNA_augmenter_{tag}_{self.current_time}.pth'
         torch.save(
                     {
                     'netA': self.netA.state_dict(),
@@ -269,6 +269,8 @@ class vae_gan:
         plt.ylabel("Loss")
         plt.legend()
         plt.savefig(self.folder / 'loss_curve.png')
+        
+        return filename
         
     
     def sample_generator(self, dataloader, noise=True, scale=1., exclude_zeros=True):
