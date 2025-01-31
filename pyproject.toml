@@ -16,11 +16,17 @@ models = "models"
 
 # -----------------------------------------------------------------------------
 [data]
-anndata_file = "Dbh_cluster.h5ad"
-hvg_file = "high_var_genes_perbatch.csv"
-hvg_seurat = "variable_genes.csv"
-
+Dbh_file = "Dbh_cluster.h5ad"
+multiome_Dbh_file = "multiome_LC-NE_Dbh_cluster.h5ad"
+Retroseq_file = "retroSeq.h5ad"
+Dbh_Retroseq_file = "Dbh_Retroseq.h5ad"
+hvg_Dbh_file = "high_var_genes_perbatch.csv"
+hvg_all_file = "hvg_perdataset.csv"
+hvg_Dbh_seurat = "variable_genes.csv"
 # -----------------------------------------------------------------------------
 [models]
-augmenter = "RNA_augmenter_2024-12-23-16-55-27.pth"
+augmenter_1 = "RNA_augmenter_2024-12-23-16-55-27.pth"
+augmenter_2 = "RNA_augmenter_2025-01-25-16-10-03.pth"
+Dbh_Retroseq_augmenter = ""
+
 
