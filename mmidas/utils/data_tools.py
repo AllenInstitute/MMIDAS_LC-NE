@@ -296,18 +296,18 @@ def Dbh_Retro_loaders(x_Dbh, x_Retro, label, batch_size=128, train_size=0.9, n_a
     if n_aug_smp > 0:
         train_set_Dbh = train_set_torch_Dbh.clone()
         train_set_ind_Dbh = train_ind_torch_Dbh.clone()
+        train_set_Dbh_aug = []
         for _ in range(n_aug_smp):
             if netA:
                 _, fake_data = netA(train_set_Dbh, True, .1)
-                train_set_Dbh = torch.cat((train_set_Dbh, fake_data.cpu().detach()), 0)
-
+                train_set_Dbh_aug.append(fake_data.cpu().detach())
+                del fake_data
             else:
-                train_set_Dbh = torch.cat((train_set_Dbh, train_set_torch_Dbh), 0)
-                
-            train_set_ind_Dbh = torch.cat((train_set_ind_Dbh, train_ind_torch_Dbh), 0)
+                train_set_Dbh_aug.append(train_set_Dbh)            
         
-        train_set_torch_Dbh = train_set_Dbh.clone()
-        train_ind_torch_Dbh = train_set_ind_Dbh.clone()
+        train_set_torch_Dbh = torch.cat((train_set_Dbh, torch.cat((train_set_Dbh_aug), dim=0)), dim=0)
+        train_ind_torch_Dbh = train_set_ind_Dbh.repeat(n_aug_smp + 1)
+        del train_set_Dbh, train_set_ind_Dbh
         print(f'New size of Dbh: {train_set_torch_Dbh.shape[0]}')
     
     if len(label) > 0:
@@ -346,19 +346,22 @@ def Dbh_Retro_loaders(x_Dbh, x_Retro, label, batch_size=128, train_size=0.9, n_a
         train_set_ind_retro = train_ind_torch_retro.clone()
         n_aug_smp_ = n_aug_smp * int(x_Dbh.shape[0]/ x_Retro.shape[0])
         print(f'Number of augmentation samples for RetroSeq: {n_aug_smp_}')
+        train_set_retro_aug = []
         for _ in range(n_aug_smp_):
             if netA:
                 _, fake_data = netA(train_set_retro, True, .1)
-                train_set_retro = torch.cat((train_set_retro, fake_data.cpu().detach()), 0)
+                train_set_retro_aug.append(fake_data.cpu().detach())
+                del fake_data
             else:
-                train_set_retro = torch.cat((train_set_retro, train_set_torch_retro), 0)
+                train_set_retro_aug.append(train_set_retro)
                 
-            train_set_ind_retro = torch.cat((train_set_ind_retro, train_ind_torch_retro), 0)
         
-        train_set_torch_retro = train_set_retro.clone()
-        train_ind_torch_retro = train_set_ind_retro.clone()
+        train_set_torch_retro = torch.cat((train_set_retro, torch.cat((train_set_retro_aug), dim=0)), dim=0)
+        train_ind_torch_retro = train_set_ind_retro.repeat(n_aug_smp_ + 1)
+        del train_set_retro, train_set_ind_retro
+        
         print(f'New size of retro: {train_set_torch_retro.shape[0]}')
-        
+    
     train_data = TensorDataset(torch.cat((train_set_torch_Dbh, train_set_torch_retro), dim=0), torch.cat((train_ind_torch_Dbh, train_ind_torch_retro), dim=0))
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True, drop_last=True, pin_memory=True)
 
