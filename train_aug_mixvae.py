@@ -1,12 +1,14 @@
 import argparse
 import os
 import torch
+import pandas as pd
+import pdb
 
 from mmidas.vaegan import vae_gan
 from mmidas.cplMixVAE import cpl_mixVAE
 from mmidas.utils.config_tools import get_paths
-from mmidas.utils.augmentation import get_loader as aug_loader
-from mmidas.utils.data_tools import load_data, get_loaders
+from mmidas.utils.augmentation import get_loader as aug_loader, freeze
+from mmidas.utils.data_tools import load_data, get_loaders, Dbh_Retro_loaders
 
 
 parser = argparse.ArgumentParser()
@@ -16,7 +18,7 @@ parser.add_argument("--alpha", default=.2, type=float,  help="triple loss parame
 parser.add_argument("--n_gene", default=0, type=int, help="number of genes")
 parser.add_argument("--n_epoch_aug", default=20000, type=int, help="Number of epochs to train")
 parser.add_argument("--fc_dim_aug", default=500, type=int, help="number of nodes at the hidden layers")
-parser.add_argument("--batch_size", default=256, type=int, help="batch size")
+parser.add_argument("--batch_size", default=512, type=int, help="batch size")
 parser.add_argument("--affine", default=False, action="store_true", help="affine transformation in the batch normalization")
 parser.add_argument("--momentum",  default=0.01, type=float, help="momentum for batch normalization")
 parser.add_argument("--lr", default=1e-3, type=float, help="learning rate")
@@ -35,7 +37,7 @@ parser.add_argument("--n_epoch", default=10000, type=int, help="Number of epochs
 parser.add_argument("--n_epoch_p", default=10000, type=int, help="Number of epochs to train pruning algorithm")
 parser.add_argument("--min_con", default=.99, type=float, help="minimum consensus")
 parser.add_argument("--max_prun_it", default=13, type=int, help="maximum number of pruning iterations")
-parser.add_argument("--n_aug_smp", default=0, type=int, help="number of augmented samples")
+parser.add_argument("--n_aug_smp", default=2, type=int, help="number of augmented samples")
 parser.add_argument("--fc_dim", default=100, type=int, help="number of nodes at the hidden layers")
 parser.add_argument("--variational", default=True, help="enable variational mode")
 parser.add_argument("--augmentation", default=False, action="store_true", help="enable VAE-GAN augmentation")
@@ -92,13 +94,21 @@ def main(
         ):
 
     config = get_paths(toml_file=toml_file)
-    data_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['anndata_file_4']
+    Dbh_Retroseq_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['Dbh_Retroseq_file']
+    gene_file = config['paths']['main_dir'] / config['paths']['data_path'] / 'Dbh_Retroseq_genes.csv'
+    Dbh_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['Dbh_file']
+    Retroseq_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['Retroseq_file']
     
     saving_folder = config['paths']['main_dir'] / config['paths']['saving_path']
     
-    data = load_data(file=data_file, n_gene=n_gene) 
+    Dbh_Retroseq_data = load_data(file=Dbh_Retroseq_file, n_gene=n_gene) 
+    # Dbh_Retroseq_genes = Dbh_Retroseq_data['gene_id']
+    # hvgs_df = pd.DataFrame({'gene': Dbh_Retroseq_genes})
+    # hvgs_df.to_csv(gene_file, index=False)
+    
+    n_gene = Dbh_Retroseq_data['log1p'].shape[1]
     folder_name = f'run_{n_run}_Cdim_{n_categories}_Sdim_{state_dim}_Zdim_{latent_dim}_pdrop_{p_drop}_fcdim_{fc_dim}_aug_{augmentation}' + \
-                  f'_lr_{lr}_narm_{n_arm}_tau_{tau}_nbatch_{batch_size}_nepoch_{n_epoch}_nepochP_{n_epoch_p}_dataset_all'
+                  f'_lr_{lr}_narm_{n_arm}_tau_{tau}_nbatch_{batch_size*2}_nepoch_{n_epoch}_nepochP_{n_epoch_p}_dataset_all'
     
     
     saving_folder = saving_folder / folder_name
@@ -124,47 +134,57 @@ def main(
         os.makedirs(aug_path, exist_ok=True)
         aug_vaegan = vae_gan(saving_folder=aug_path, device=device)
         aug_vaegan.init_model(
-                                input_dim=data['log1p'].shape[1], 
-                                z_dim=z_dim, 
-                                noise_dim=noise_dim, 
-                                fc_dim=fc_dim_aug, 
-                                x_drop=p_drop, 
-                                affine=affine, 
-                                momentum=momentum,
-                                )
-    
-        data_loader = aug_loader(x=data['log1p'], batch_size=batch_size, training=True)
-        aug_model = aug_vaegan.train(
-                                    dataloader=data_loader, 
-                                    n_epoch=n_epoch_aug, 
-                                    lr=lr, 
-                                    alpha=alpha, 
-                                    lam = [1, 0.5, .1, .5], 
-                                    tag='Dbh_Retroseq',
-                                    )
+                            input_dim=n_gene,
+                            z_dim=z_dim, 
+                            noise_dim=noise_dim, 
+                            fc_dim=fc_dim_aug, 
+                            x_drop=p_drop, 
+                            affine=affine, 
+                            momentum=momentum,
+                            )
+        
+        if str(config['models']['Dbh_Retroseq_augmenter']) == '.':
+            data_loader = aug_loader(x=Dbh_Retroseq_data['log1p'], batch_size=batch_size, training=True)
+            aug_model = aug_vaegan.train(
+                                        dataloader=data_loader, 
+                                        n_epoch=n_epoch_aug, 
+                                        lr=lr, 
+                                        alpha=alpha, 
+                                        lam = [1, 0.5, .1, .5], 
+                                        tag='Dbh_Retroseq',
+                                        )
+        else:
+            aug_model = aug_path / config['models']['Dbh_Retroseq_augmenter']
         
         aug_file = aug_path / aug_model
         aug_vaegan.load_model(aug_file)
         augmenter = aug_vaegan.netA
+        freeze(augmenter)
         
     else:
         augmenter = []
-        
+    
+    x_Dbh = Dbh_Retroseq_data['log1p'][Dbh_Retroseq_data['dataset'] == 'Dbh']
+    x_Retroseq = Dbh_Retroseq_data['log1p'][Dbh_Retroseq_data['dataset'] == 'Retroseq'] 
+    label = Dbh_Retroseq_data['injection_target'][Dbh_Retroseq_data['dataset'] == 'Retroseq']
+
+    _, train_loader, test_loader, _, _, _ = Dbh_Retro_loaders(
+                                                                x_Dbh==x_Dbh,
+                                                                x_Retro=x_Retroseq,
+                                                                label=label,
+                                                                batch_size=batch_size*2, 
+                                                                n_aug_smp=n_aug_smp, 
+                                                                netA=augmenter.to('cpu'),
+                                                                additional_val=False,
+                                                                seed=seed,
+                                                                )
+    del Dbh_Retroseq_data
     
     mixvae = cpl_mixVAE(saving_folder=saving_folder, augmenter=augmenter, device=device)
-    
-    _, train_loader, test_loader, _, _, _ = get_loaders(
-                                                        x=data['log1p'],
-                                                        batch_size=batch_size, 
-                                                        n_aug_smp=n_aug_smp, 
-                                                        additional_val=False,
-                                                        seed=seed,
-                                                        )
-
     mixvae.init_model(
                     n_categories=n_categories,
                     state_dim=state_dim,
-                    input_dim=data['log1p'].shape[1],
+                    input_dim=n_gene,
                     fc_dim=fc_dim,
                     lowD_dim=latent_dim,
                     x_drop=p_drop,
