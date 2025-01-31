@@ -32,13 +32,11 @@ class vae_gan:
             self.device = torch.device('cpu')
             print('---> Computional node is not assigned, using CPU!')
         else:
-            if device == 'cpu':
-                self.device = torch.device('cpu')
-                print('---> Using CPU!')
-            else:
-                self.device = torch.device(torch.cuda.current_device())
+            try:
                 torch.cuda.set_device(self.device)
                 print('--->' + torch.cuda.get_device_name(torch.cuda.current_device()))
+            except:
+                print('---> Using CPU!')
 
 
     def init_model(self, input_dim, z_dim, noise_dim, fc_dim=100, x_drop=0.5, affine=False, momentum=0.01, trained_model=''):
