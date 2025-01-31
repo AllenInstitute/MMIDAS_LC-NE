@@ -73,3 +73,16 @@ def get_loader(x, batch_size, training=True, eps=1e-2):
     print("Dataloader for augmentation created!")
     return dataloader
 
+
+def freeze(model):
+    for p in model.parameters():
+        p.requires_grad_(False)
+    model.eval()    
+    
+    
+def unfreeze(model):
+    for p in model.parameters():
+        p.requires_grad_(True)
+    model.train(True)
+
+
