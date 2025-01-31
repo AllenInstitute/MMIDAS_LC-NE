@@ -32,13 +32,11 @@ class cpl_mixVAE:
             self.device = torch.device('cpu')
             print('---> Computional node is not assigned, using CPU!')
         else:
-            if device == 'cpu':
-                self.device = torch.device('cpu')
-                print('---> Using CPU!')
-            else:
-                self.device = torch.device(torch.cuda.current_device())
+           try:
                 torch.cuda.set_device(self.device)
                 print('--->' + torch.cuda.get_device_name(torch.cuda.current_device()))
+           except:
+               print('---> Using CPU!')
 
         if self.aug:
             self.netA = augmenter.to(self.device)
