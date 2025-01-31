@@ -2,6 +2,7 @@ import pickle
 import numpy as np
 import time
 import torch
+import pdb
 from torch.autograd import Variable
 import torch.nn.utils.prune as prune
 import matplotlib.pyplot as plt
@@ -203,11 +204,11 @@ class cpl_mixVAE:
                     else:
                         c_bin = 0.
                         prior_c = 0.
-
-                    self.optimizer.zero_grad()
+                   
                     recon_batch, p_x, r_x, x_low, qc, s, c, mu, log_var, log_qc = self.model(x=trans_data, temp=self.temp, prior_c=prior_c)
                     loss, loss_rec, loss_joint, entropy, dist_c, d_qc, KLD_cont, min_var_0, loglikelihood = \
                         self.model.loss(recon_batch, p_x, r_x, trans_data, mu, log_var, qc, c, c_bin)
+                    self.optimizer.zero_grad()
                     loss.backward()
                     self.optimizer.step()
                     train_loss_val += loss.data.item()
