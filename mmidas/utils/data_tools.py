@@ -331,7 +331,6 @@ def Dbh_Retro_loaders(x_Dbh, x_Retro, label, batch_size=128, train_size=0.9, n_a
             val_set_retro = x_Retro[val_ind_retro]
         
     else:
-        tt_size = int(train_size * x_Retro.shape[0])
         train_set_retro = x_Retro.copy()
         train_ind_retro = range(x_Retro.shape[0])
         val_set_retro = x_Retro.copy()
