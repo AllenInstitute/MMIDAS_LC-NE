@@ -37,7 +37,7 @@ parser.add_argument("--n_epoch", default=10000, type=int, help="Number of epochs
 parser.add_argument("--n_epoch_p", default=10000, type=int, help="Number of epochs to train pruning algorithm")
 parser.add_argument("--min_con", default=.99, type=float, help="minimum consensus")
 parser.add_argument("--max_prun_it", default=13, type=int, help="maximum number of pruning iterations")
-parser.add_argument("--n_aug_smp", default=2, type=int, help="number of augmented samples")
+parser.add_argument("--n_aug_smp", default=0, type=int, help="number of augmented samples")
 parser.add_argument("--fc_dim", default=100, type=int, help="number of nodes at the hidden layers")
 parser.add_argument("--variational", default=True, help="enable variational mode")
 parser.add_argument("--augmentation", default=False, action="store_true", help="enable VAE-GAN augmentation")
@@ -50,6 +50,7 @@ parser.add_argument("--training_mode", default='MSE', type=str, help="mode of th
 parser.add_argument("--seed", default=0, type=int, help="random seed")
 parser.add_argument("--cuda", default=False, action="store_true", help="enable cuda (gpu device)")
 parser.add_argument("--toml_file", default='pyproject.toml', type=str, help="the project toml file")
+parser.add_argument("--data_file", default='Dbh_Retroseq', type=str, help="the data file")
 
 
 def main(
@@ -90,21 +91,15 @@ def main(
         n_prun_c,
         training_mode,
         toml_file,
+        data_file,
         seed,
         ):
 
     config = get_paths(toml_file=toml_file)
-    Dbh_Retroseq_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['Dbh_Retroseq_file']
-    gene_file = config['paths']['main_dir'] / config['paths']['data_path'] / 'Dbh_Retroseq_genes.csv'
-    Dbh_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['Dbh_file']
-    Retroseq_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['Retroseq_file']
-    
+    Dbh_Retroseq_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data'][data_file]
     saving_folder = config['paths']['main_dir'] / config['paths']['saving_path']
-    
     Dbh_Retroseq_data = load_data(file=Dbh_Retroseq_file, n_gene=n_gene) 
-    # Dbh_Retroseq_genes = Dbh_Retroseq_data['gene_id']
-    # hvgs_df = pd.DataFrame({'gene': Dbh_Retroseq_genes})
-    # hvgs_df.to_csv(gene_file, index=False)
+
     
     n_gene = Dbh_Retroseq_data['log1p'].shape[1]
     folder_name = f'run_{n_run}_Cdim_{n_categories}_Sdim_{state_dim}_Zdim_{latent_dim}_pdrop_{p_drop}_fcdim_{fc_dim}_aug_{augmentation}' + \
@@ -151,7 +146,7 @@ def main(
                                         lr=lr, 
                                         alpha=alpha, 
                                         lam = [1, 0.5, .1, .5], 
-                                        tag='Dbh_Retroseq',
+                                        tag=data_file,
                                         )
         else:
             aug_model = aug_path / config['models']['Dbh_Retroseq_augmenter']
@@ -171,8 +166,7 @@ def main(
     _, train_loader, test_loader, _, _, _ = Dbh_Retro_loaders(
                                                                 x_Dbh==x_Dbh,
                                                                 x_Retro=x_Retroseq,
-                                                                label=label,
-                                                                batch_size=batch_size*2, 
+                                                                batch_size=batch_size, 
                                                                 n_aug_smp=n_aug_smp, 
                                                                 netA=augmenter.to('cpu'),
                                                                 additional_val=False,
