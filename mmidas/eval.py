@@ -4,7 +4,7 @@ import pickle
 import matplotlib.pyplot as plt
 
 
-def summarize_inference(cpl_mixVAE, files, data, saving_folder=''):
+def summarize_inference(cpl_mixVAE, files, data, saving_folder='', verbose=True):
     """
     Inference summary for the cpl_mixVAE model
 
@@ -41,7 +41,8 @@ def summarize_inference(cpl_mixVAE, files, data, saving_folder=''):
     for i, file in enumerate(files):
         # Extract model name from file path
         file_name_ind = file.rfind('/')
-        print(f'Model {file[file_name_ind:]}')
+        if verbose:
+            print(f'Model {file[file_name_ind:]}')
 
         # Load the model
         cpl_mixVAE.load_model(file)

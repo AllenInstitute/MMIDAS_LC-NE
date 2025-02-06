@@ -252,6 +252,7 @@ def K_selection(data_dict, num_category, n_arm, thr=0.95):
         ax = fig.add_subplot()
         ax.plot(data_dict['num_pruned'][indx], data_dict['d_qc'][indx], label='Average Distance')
         ax.plot(data_dict['num_pruned'][indx], neg_cons[indx], label='Average Dissent (1 - Consensus)')
+        ax.plot(data_dict['num_pruned'][indx], norm_recon_mean[indx], label='Average Normalized Reconstruction Loss')
         ax.set_xlim([np.min(data_dict['num_pruned'][indx])-1, num_category + 1])
         ax.set_xlabel('Categories', fontsize=14)
         ax.set_xticks(data_dict['num_pruned'][indx])
@@ -262,7 +263,7 @@ def K_selection(data_dict, num_category, n_arm, thr=0.95):
             ax.hlines(neg_cons[indx][selected_idx], min(data_dict['num_pruned']), max(data_dict['num_pruned']), colors='gray', linestyles='dotted')
         
         ax.legend(loc='upper right')
-        ax.set_ylim([0, y_max])
+        ax.set_ylim([0, 0.5])
         ax.grid(True)
         plt.show()
 

@@ -435,3 +435,31 @@ def select_best_genes(X, y, n_top_genes=500, K_fold=10, n_repeat=10):
     
     return final_features
 
+
+
+def jaccard_distance(target: torch.Tensor, prediction: torch.Tensor, scaled: bool = True) -> torch.Tensor:
+    """
+    Compute the Jaccard distance between two binary tensors.
+    
+    Args:
+        target (torch.Tensor): Target tensor.
+        prediction (torch.Tensor): Prediction tensor.
+        
+    Returns:
+        torch.Tensor: Jaccard distance.
+    """
+    # Ensure binary tensors
+    y_true = target.bool() if hasattr(target, "bool") else target
+    y_pred = prediction.bool() if hasattr(prediction, "bool") else prediction
+    
+    # Compute intersection and union
+    intersection = torch.sum(y_true & y_pred)
+    union = torch.sum(y_true | y_pred)
+    
+    # Jaccard Index and Distance
+    jaccard_index = intersection / union if union > 0 else torch.tensor(0.0)
+    if scaled:
+        return (1 - jaccard_index) * union
+    else:
+        return 1 - jaccard_index
+
