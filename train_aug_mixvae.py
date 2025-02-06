@@ -42,7 +42,7 @@ parser.add_argument("--fc_dim", default=100, type=int, help="number of nodes at 
 parser.add_argument("--variational", default=True, help="enable variational mode")
 parser.add_argument("--augmentation", default=False, action="store_true", help="enable VAE-GAN augmentation")
 parser.add_argument("--s_drop", default=0.0, type=float, help="state probability of dropout")
-parser.add_argument("--n_run", default=3, type=int, help="number of the experiment")
+parser.add_argument("--n_run", default=5, type=int, help="number of the experiment")
 parser.add_argument("--hard", default=False, action="store_true", help="hard encoding")
 parser.add_argument("--pre_trained_model", default='', type=str, help="pre-trained model")
 parser.add_argument("--n_prun_c", default=0, type=int, help="number of prunned categories")
@@ -96,14 +96,14 @@ def main(
         ):
 
     config = get_paths(toml_file=toml_file)
-    Dbh_Retroseq_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data'][data_file]
+    Dbh_Retroseq_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data'][f'{data_file}_file']
     saving_folder = config['paths']['main_dir'] / config['paths']['saving_path']
     Dbh_Retroseq_data = load_data(file=Dbh_Retroseq_file, n_gene=n_gene) 
 
     
     n_gene = Dbh_Retroseq_data['log1p'].shape[1]
     folder_name = f'run_{n_run}_Cdim_{n_categories}_Sdim_{state_dim}_Zdim_{latent_dim}_pdrop_{p_drop}_fcdim_{fc_dim}_aug_{augmentation}' + \
-                  f'_lr_{lr}_narm_{n_arm}_tau_{tau}_nbatch_{batch_size*2}_nepoch_{n_epoch}_nepochP_{n_epoch_p}_dataset_all'
+                  f'_lr_{lr}_narm_{n_arm}_tau_{tau}_nbatch_{batch_size*2}_nepoch_{n_epoch}_nepochP_{n_epoch_p}_{data_file}'
     
     
     saving_folder = saving_folder / folder_name
@@ -138,7 +138,7 @@ def main(
                             momentum=momentum,
                             )
         
-        if str(config['models']['Dbh_Retroseq_augmenter']) == '.':
+        if str(config['models'][f'augmenter_{data_file}']) == '.':
             data_loader = aug_loader(x=Dbh_Retroseq_data['log1p'], batch_size=batch_size, training=True)
             aug_model = aug_vaegan.train(
                                         dataloader=data_loader, 
@@ -149,7 +149,7 @@ def main(
                                         tag=data_file,
                                         )
         else:
-            aug_model = aug_path / config['models']['Dbh_Retroseq_augmenter']
+            aug_model = aug_path / config['models'][f'augmenter_{data_file}']
         
         aug_file = aug_path / aug_model
         aug_vaegan.load_model(aug_file)
