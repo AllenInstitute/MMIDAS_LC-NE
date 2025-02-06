@@ -286,7 +286,7 @@ def get_loaders(x, label=[], batch_size=128, train_size=0.9, n_aug_smp=0, netA=N
     return alldata_loader, train_loader, test_loader, validation_loader, test_ind, val_ind
 
 
-def Dbh_Retro_loaders(x_Dbh, x_Retro, label, batch_size=128, train_size=0.9, n_aug_smp=0, netA=None, additional_val=False, seed=0):
+def Dbh_Retro_loaders(x_Dbh, x_Retro, label=[], batch_size=128, train_size=0.9, n_aug_smp=0, netA=None, additional_val=False, seed=0):
 
     tt_size = int(train_size * x_Dbh.shape[0])
     train_set_Dbh, val_set_Dbh, test_set_Dbh, train_ind_Dbh, val_ind_Dbh, test_ind_Dbh = get_data(x_Dbh, tt_size, additional_val, seed)
@@ -381,9 +381,9 @@ def Dbh_Retro_loaders(x_Dbh, x_Retro, label, batch_size=128, train_size=0.9, n_a
         validation_loader = DataLoader(validation_data, batch_size=batch_size, shuffle=True, drop_last=False, pin_memory=True)
     else:
         validation_loader = []
-        val_ind = []
+        val_ind_torch = []
         
-    return alldata_loader, train_loader, test_loader, validation_loader, test_ind, val_ind
+    return alldata_loader, train_loader, test_loader, validation_loader, test_ind_torch, val_ind_torch
 
 
 
