@@ -42,7 +42,7 @@ parser.add_argument("--fc_dim", default=100, type=int, help="number of nodes at 
 parser.add_argument("--variational", default=True, help="enable variational mode")
 parser.add_argument("--augmentation", default=False, action="store_true", help="enable VAE-GAN augmentation")
 parser.add_argument("--s_drop", default=0.0, type=float, help="state probability of dropout")
-parser.add_argument("--n_run", default=5, type=int, help="number of the experiment")
+parser.add_argument("--n_run", default=7, type=int, help="number of the experiment")
 parser.add_argument("--hard", default=False, action="store_true", help="hard encoding")
 parser.add_argument("--pre_trained_model", default='', type=str, help="pre-trained model")
 parser.add_argument("--n_prun_c", default=0, type=int, help="number of prunned categories")
@@ -103,7 +103,7 @@ def main(
     
     n_gene = Dbh_Retroseq_data['log1p'].shape[1]
     folder_name = f'run_{n_run}_Cdim_{n_categories}_Sdim_{state_dim}_Zdim_{latent_dim}_pdrop_{p_drop}_fcdim_{fc_dim}_aug_{augmentation}' + \
-                  f'_lr_{lr}_narm_{n_arm}_tau_{tau}_nbatch_{batch_size*2}_nepoch_{n_epoch}_nepochP_{n_epoch_p}_{data_file}'
+                  f'_naug_{n_aug_smp}_lr_{lr}_narm_{n_arm}_tau_{tau}_nbatch_{batch_size}_nepoch_{n_epoch}_nepochP_{n_epoch_p}_{data_file}'
     
     
     saving_folder = saving_folder / folder_name
@@ -164,15 +164,18 @@ def main(
     label = Dbh_Retroseq_data['injection_target'][Dbh_Retroseq_data['dataset'] == 'Retroseq']
 
     _, train_loader, test_loader, _, _, _ = Dbh_Retro_loaders(
-                                                                x_Dbh==x_Dbh,
+                                                                x_Dbh=x_Dbh,
                                                                 x_Retro=x_Retroseq,
                                                                 batch_size=batch_size, 
+                                                                label=label,
                                                                 n_aug_smp=n_aug_smp, 
                                                                 netA=augmenter.to('cpu'),
                                                                 additional_val=False,
                                                                 seed=seed,
                                                                 )
     del Dbh_Retroseq_data
+    print(train_loader.dataset.tensors[0])
+    print(test_loader.dataset.tensors[0])
     
     mixvae = cpl_mixVAE(saving_folder=saving_folder, augmenter=augmenter, device=device)
     mixvae.init_model(
