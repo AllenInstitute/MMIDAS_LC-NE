@@ -623,8 +623,8 @@ class cpl_mixVAE:
         state_sample = np.zeros((self.n_arm, max_len, self.state_dim))
         state_mu = np.zeros((self.n_arm, max_len, self.state_dim))
         state_var = np.zeros((self.n_arm, max_len, self.state_dim))
-        z_prob = np.zeros((self.n_arm, max_len, self.n_categories))
-        z_sample = np.zeros((self.n_arm, max_len, self.n_categories))
+        z_prob = np.zeros((self.n_arm, max_len, self.n_categories)) # - len(prune_indx)))
+        z_sample = np.zeros((self.n_arm, max_len, self.n_categories)) # - len(prune_indx)))
         data_low = np.zeros((self.n_arm, max_len, self.lowD_dim))
         state_cat = np.zeros([self.n_arm, max_len])
         prob_cat = np.zeros([self.n_arm, max_len])
@@ -678,7 +678,7 @@ class cpl_mixVAE:
                         state_mu[arm, i * batch_size:min((i + 1) * batch_size, max_len), :] = mu[arm].cpu().detach().numpy()
                         state_var[arm, i * batch_size:min((i + 1) * batch_size, max_len), :] = log_sigma[arm].cpu().detach().numpy()
                         z_encoder = z_category[arm].cpu().data.view(z_category[arm].size()[0], self.n_categories).detach().numpy()
-                        z_prob[arm, i * batch_size:min((i + 1) * batch_size, max_len), :] = z_encoder
+                        z_prob[arm, i * batch_size:min((i + 1) * batch_size, max_len), :] = z_encoder #[:, prune_indx]
                         z_samp = z_smp[arm].cpu().data.view(z_smp[arm].size()[0], self.n_categories).detach().numpy()
                         z_sample[arm, i * batch_size:min((i + 1) * batch_size, max_len), :] = z_samp
                         data_low[arm,  i * batch_size:min((i + 1) * batch_size, max_len), :] = x_low[arm].detach().cpu().numpy()
@@ -727,7 +727,7 @@ class cpl_mixVAE:
                     state_mu[arm, :, :] = mu[arm].cpu().detach().numpy()
                     state_var[arm, :, :] = log_sigma[arm].cpu().detach().numpy()
                     z_encoder = z_category[arm].cpu().data.view(z_category[arm].size()[0], self.n_categories).detach().numpy()
-                    z_prob[arm, :, :] = z_encoder
+                    z_prob[arm, :, :] = z_encoder #[:, prune_indx]
                     z_samp = z_smp[arm].cpu().data.view(z_smp[arm].size()[0], self.n_categories).detach().numpy()
                     z_sample[arm, :, :] = z_samp
                     data_low[arm, :, :] = x_low[arm].detach().cpu().numpy()
@@ -745,6 +745,20 @@ class cpl_mixVAE:
                         predicted_label[arm, ] = np.argmax(z_encoder, axis=1) + 1
 
         
+        if (i + 1) * batch_size < max_len:
+            state_sample = state_sample[:, :(i+1) * batch_size, :]
+            state_mu = state_mu[:, :(i+1) * batch_size, :]
+            state_var = state_var[:, :(i+1) * batch_size, :]
+            z_prob = z_prob[:, :(i+1) * batch_size, :]
+            z_sample = z_sample[:, :(i+1) * batch_size, :]
+            data_low = data_low[:, :(i+1) * batch_size, :]
+            state_cat = state_cat[:, :(i+1) * batch_size]
+            prob_cat = prob_cat[:, :(i+1) * batch_size]
+            data_indx = data_indx[:(i+1) * batch_size]
+            recon_cell = recon_cell[:, :(i+1) * batch_size, :]
+            predicted_label = predicted_label[:, :(i+1) * batch_size]
+            
+            
         mean_test_rec = np.zeros(self.n_arm)
         mean_total_loss_rec = np.zeros(self.n_arm)
         mean_total_loglikelihood = np.zeros(self.n_arm)
@@ -774,6 +788,16 @@ class cpl_mixVAE:
         d_dict['prune_indx'] = prune_indx
 
         return d_dict
+    
+    
+    def sample_state(self, mu, var, n_samp=1000, seed=0):
+        np.random.seed(seed)
+        rand_indx = np.random.choice(mu.shape[0], n_samp, replace=True)
+        mu_tensor = torch.tensor(mu[rand_indx, :], dtype=torch.float32)
+        var_tensor = torch.tensor(var[rand_indx, :], dtype=torch.float32)
+        s = self.model.reparam_trick(mu_tensor, var_tensor)
+        
+        return rand_indx, s.numpy()
 
 
     def save_file(self, fname, **kwargs):
