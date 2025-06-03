@@ -84,7 +84,6 @@ def main(args):
     saving_folder = str(saving_folder)
     
         
-    pdb.set_trace()
     if args.cuda:
         free_gpus = []
         for i in range(torch.cuda.device_count()):
