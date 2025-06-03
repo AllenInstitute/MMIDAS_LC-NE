@@ -6,6 +6,7 @@ import matplotlib.colors as mcolors
 from sklearn.feature_extraction.text import TfidfTransformer
 import pandas as pd
 import pdb
+import json
 from scipy.sparse import issparse
 import torch
 from torch.utils.data import DataLoader, TensorDataset
@@ -250,7 +251,7 @@ def get_loaders(x, label=[], batch_size=128, train_size=0.9, n_aug_smp=0, netA=N
         train_set_ind = train_ind_torch.clone()
         for _ in range(n_aug_smp):
             if netA:
-                _, fake_data = netA(train_set, True, .1)
+                _, fake_data = netA(train_set_torch, True, .1)
                 train_set = torch.cat((train_set, fake_data.cpu().detach()), 0)
 
             else:
@@ -463,3 +464,16 @@ def jaccard_distance(target: torch.Tensor, prediction: torch.Tensor, scaled: boo
     else:
         return 1 - jaccard_index
 
+
+def load_mixed_file(file_path):
+    data = []
+    with open(file_path, 'r', encoding='utf-8') as file:
+        for line in file:
+            line = line.strip()
+            if line:  # Ensure it's not an empty line
+                try:
+                    parsed_line = json.loads(line)  # Parse JSON (dict or value)
+                except json.JSONDecodeError:
+                    parsed_line = line  # Keep as string if it's not valid JSON
+                data.append(parsed_line)
+    return data

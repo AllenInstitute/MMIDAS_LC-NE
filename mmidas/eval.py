@@ -4,7 +4,7 @@ import pickle
 import matplotlib.pyplot as plt
 
 
-def summarize_inference(cpl_mixVAE, files, data, saving_folder='', min_c_size=20, verbose=True):
+def summarize_inference(cpl_mixVAE, files, data, saving_folder='', min_c_size=0, verbose=True):
     """
     Inference summary for the cpl_mixVAE model
 
@@ -60,6 +60,7 @@ def summarize_inference(cpl_mixVAE, files, data, saving_folder='', min_c_size=20
         prune_indx.append(output_dict['prune_indx'])
         sample_id.append(output_dict['data_indx'])
         label_pred.append(predicted_label)
+        update_prun = False
 
         # Store test loss for each arm
         for arm in range(cpl_mixVAE.n_arm):
