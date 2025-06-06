@@ -3,14 +3,11 @@ pandas
 seaborn
 scikit-learn
 scanpy
-anndata==0.10.8
+anndata
 jupyterlab
-flatten-json
-feather-format
 h5py
 hdf5plugin
 toml
 tqdm
 muon
 wandb
-tensorboard
