@@ -35,7 +35,7 @@ parser.add_argument("--ref_pc", default=False, action="store_true", help="using 
 parser.add_argument("--latent_dim", default=10, type=int, help="latent dimension")
 parser.add_argument("--n_epoch", default=10000, type=int, help="Number of epochs to train")
 parser.add_argument("--n_epoch_p", default=10000, type=int, help="Number of epochs to train pruning algorithm")
-parser.add_argument("--min_con", default=.99, type=float, help="minimum consensus")
+parser.add_argument("--min_con", default=1., type=float, help="minimum consensus")
 parser.add_argument("--max_prun_it", default=9, type=int, help="maximum number of pruning iterations")
 parser.add_argument("--n_aug_smp", default=0, type=int, help="number of augmented samples")
 parser.add_argument("--fc_dim", default=100, type=int, help="number of nodes at the hidden layers")
@@ -50,28 +50,28 @@ parser.add_argument("--training_mode", default='MSE', type=str, help="mode of th
 parser.add_argument("--seed", default=0, type=int, help="random seed")
 parser.add_argument("--cuda", default=False, action="store_true", help="enable cuda (gpu device)")
 parser.add_argument("--toml_file", default='pyproject.toml', type=str, help="the project toml file")
-parser.add_argument("--data_file", default='Dbh_Retroseq', type=str, help="the data file")
+parser.add_argument("--data_file", default='Retroseq_updated', type=str, help="the data file")
 parser.add_argument("--platform", type=str, help="if you want to run the code on a specific platform, please specify it here ('Dbh' or 'Retroseq')")
 
 
 def main(args):
 
     config = get_paths(toml_file=args.toml_file)
-    Dbh_Retroseq_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data'][f'{args.data_file}_file']
+    data_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data'][f'{args.data_file}_file']
     saving_folder = config['paths']['main_dir'] / config['paths']['saving_path']
-    Dbh_Retroseq_data = load_data(file=Dbh_Retroseq_file, n_gene=args.n_gene) 
+    data = load_data(file=data_file, n_gene=args.n_gene) 
 
-    if args.platform:
-        indx = Dbh_Retroseq_data['dataset'] == args.platform
-        Dbh_Retroseq_data['log1p'] = Dbh_Retroseq_data['log1p'][indx]
-        for key in Dbh_Retroseq_data:
-            if key != 'log1p' and key != 'gene_id':
-                Dbh_Retroseq_data[key] = Dbh_Retroseq_data[key][indx]
+    # if args.platform:
+    #     indx = Dbh_Retroseq_data['dataset'] == args.platform
+    #     Dbh_Retroseq_data['log1p'] = Dbh_Retroseq_data['log1p'][indx]
+    #     for key in Dbh_Retroseq_data:
+    #         if key != 'log1p' and key != 'gene_id':
+    #             Dbh_Retroseq_data[key] = Dbh_Retroseq_data[key][indx]
 
 
-    n_gene = Dbh_Retroseq_data['log1p'].shape[1]
+    n_gene = data['log1p'].shape[1]
     folder_name = f'run_{args.n_run}_Cdim_{args.n_categories}_Sdim_{args.state_dim}_Zdim_{args.latent_dim}_pdrop_{args.p_drop}_fcdim_{args.fc_dim}_aug_{args.augmentation}' + \
-                  f'_naug_{args.n_aug_smp}_lr_{args.lr}_narm_{args.n_arm}_tau_{args.tau}_nbatch_{args.batch_size}_nepoch_{args.n_epoch}_nepochP_{args.n_epoch_p}_{args.platform}'
+                  f'_naug_{args.n_aug_smp}_lr_{args.lr}_narm_{args.n_arm}_tau_{args.tau}_nbatch_{args.batch_size}_nepoch_{args.n_epoch}_nepochP_{args.n_epoch_p}_{args.data_file}'
     
     
     saving_folder = saving_folder / folder_name
@@ -112,7 +112,7 @@ def main(args):
                             )
         
         if str(config['models'][f'augmenter_{args.platform}']) == '.':
-            data_loader = aug_loader(x=Dbh_Retroseq_data['log1p'], batch_size=args.batch_size, training=True)
+            data_loader = aug_loader(x=data['log1p'], batch_size=args.batch_size, training=True)
             aug_model = aug_vaegan.train(
                                         dataloader=data_loader, 
                                         n_epoch=args.n_epoch_aug, 
@@ -134,7 +134,7 @@ def main(args):
 
     if args.platform:
         _, train_loader, test_loader, _, _, _ = get_loaders(
-                                                            x=Dbh_Retroseq_data['log1p'],
+                                                            x=data['log1p'],
                                                             batch_size=args.batch_size, 
                                                             n_aug_smp=args.n_aug_smp, 
                                                             netA=augmenter.to('cpu'),
@@ -142,9 +142,9 @@ def main(args):
                                                             seed=args.seed,
                                                             )
     else:
-        x_Dbh = Dbh_Retroseq_data['log1p'][Dbh_Retroseq_data['dataset'] == 'Dbh']
-        x_Retroseq = Dbh_Retroseq_data['log1p'][Dbh_Retroseq_data['dataset'] == 'Retroseq'] 
-        label = Dbh_Retroseq_data['injection_target'][Dbh_Retroseq_data['dataset'] == 'Retroseq']
+        x_Dbh = data['log1p'][data['dataset'] == 'Dbh']
+        x_Retroseq = data['log1p'][data['dataset'] == 'Retroseq'] 
+        label = data['injection_target'][data['dataset'] == 'Retroseq']
         _, train_loader, test_loader, _, _, _ = Dbh_Retro_loaders(
                                                                     x_Dbh=x_Dbh,
                                                                     x_Retro=x_Retroseq,
@@ -155,7 +155,7 @@ def main(args):
                                                                     additional_val=False,
                                                                     seed=args.seed,
                                                                     )
-    del Dbh_Retroseq_data
+    del data
     # print(train_loader.dataset.tensors[0])
     # print(test_loader.dataset.tensors[0])
     

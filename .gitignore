@@ -1,0 +1,6 @@
+# ignore the following files
+results/
+data/
+figures/
+models/
+LC_NE_MixRep.egg-info/

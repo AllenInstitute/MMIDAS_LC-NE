@@ -19,6 +19,7 @@ models = "models"
 Dbh_file = "Dbh_cluster.h5ad"
 multiome_Dbh_file = "multiome_LC-NE_Dbh_cluster.h5ad"
 Retroseq_file = "retroSeq.h5ad"
+Retroseq_updated_file = "retroseq_updated_norm.h5ad"
 Dbh_Retroseq_file = "Dbh_Retroseq_logcpm.h5ad"
 Retroseq_Dbh_file = "Retroseq_Dbh_logcpm.h5ad"
 Dbh_Retroseq_nobr_file = "Dbh_Retroseq_nobr.h5ad"
@@ -31,5 +32,7 @@ augmenter_Dbh_Retroseq = "RNA_augmenter_Dbh_Retroseq_file_2025-02-05-11-21-27.pt
 augmenter_Retroseq_Dbh = "RNA_augmenter_Retroseq_Dbh_file_2025-02-05-11-25-10.pth"
 augmenter_Dbh_Retroseq_nobr = "RNA_augmenter_Dbh_Retroseq_nobr_2025-02-06-15-00-51.pth"
 augmenter_Dbh_Retroseq_binary = ""
+augmenter_Retroseq = ""
+augmenter_Dbh = ""
 
 

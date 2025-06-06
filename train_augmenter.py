@@ -31,6 +31,7 @@ def main(z_dim, noise_dim, alpha, n_gene, n_epoch, fc_dim, batch_size, affine, l
     data_file_2 = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['anndata_file_2']
     data_file_3 = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['anndata_file_3']
     gene_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['hvg_file_2']
+    print(f"gene_file: {gene_file}")
     
     data_files = [data_file_1, data_file_2, data_file_3]
     data = load_data(file=data_files, gene_file=gene_file, n_gene=n_gene) 
