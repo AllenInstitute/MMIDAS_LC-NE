@@ -221,10 +221,14 @@ def K_selection(data_dict, num_category, n_arm, thr=0.95, yaxis_scale=0, plot_re
             norm_recon.append(tmp / np.max(tmp))
             l_recon.append(recon_loss[a])
 
+        if n_comb == 1:
+            axis=0
+        else:
+            axis=1
         norm_recon_mean = np.mean(norm_recon, axis=0)
         l_recon_mean = np.mean(l_recon, axis=0)
-        neg_cons = 1 - np.mean(data_dict['con_mean'], axis=0)
-        consensus = np.mean(data_dict['con_mean'], axis=0)
+        neg_cons = 1 - np.mean(data_dict['con_mean'], axis=axis)
+        consensus = np.mean(data_dict['con_mean'], axis=axis)
         mean_cost = (neg_cons + norm_recon_mean + norm_aitchison_dist) / 3 # cplmixVAE_data['d_qz']
         
         # suggest the number of clusters
@@ -237,7 +241,10 @@ def K_selection(data_dict, num_category, n_arm, thr=0.95, yaxis_scale=0, plot_re
             ordered_rec = l_recon_mean[indx]
             ordered_cons = consensus[indx]
             tmp_ind = np.where(ordered_cons > thr)[0]
-            max_changes_indx = np.where(np.diff(ordered_cons[tmp_ind]) == max(np.diff(ordered_cons[tmp_ind])))[0][0] + 1
+            if len(tmp_ind) == 1:
+                max_changes_indx = 0
+            else:
+                max_changes_indx = np.where(np.diff(ordered_cons[tmp_ind]) == max(np.diff(ordered_cons[tmp_ind])))[0][0] + 1
             selected_idx = max_changes_indx
             K = data_dict['num_pruned'][indx][selected_idx] 
             
@@ -258,6 +265,7 @@ def K_selection(data_dict, num_category, n_arm, thr=0.95, yaxis_scale=0, plot_re
         ax.set_xlabel('Categories', fontsize=14)
         ax.set_xticks(data_dict['num_pruned'][indx])
         ax.set_xticklabels(data_dict['num_pruned'][indx], fontsize=8, rotation=90)
+        ax.set_title(f'Seeking consensus {n_arm}-arm MMIDAS', fontsize=14)
         y_max = np.max([np.max(data_dict['d_qc']), np.max(neg_cons)]) + 0.1
         if plot_flag:
             ax.vlines(data_dict['num_pruned'][indx][selected_idx], 0, y_max, colors='gray', linestyles='dotted')

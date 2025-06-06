@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.preprocessing import normalize
 import pickle
 import matplotlib.pyplot as plt
+import pdb
 
 
 def summarize_inference(cpl_mixVAE, files, data, saving_folder='', min_c_size=0, verbose=True):
@@ -111,7 +112,8 @@ def summarize_inference(cpl_mixVAE, files, data, saving_folder='', min_c_size=0,
                 diag_term = np.diag(armA_vs_armB_norm)
                 ind_sort = np.argsort(diag_term)
                 consensus_min.append(np.min(diag_term))
-                con_mean = 1. - (sum(np.abs(predicted_label[0, :] - predicted_label[1, :])) / predicted_label.shape[1])
+                # con_mean = 1. - (sum(np.abs(pred_a != pred_b)) / predicted_label.shape[1])
+                con_mean = np.mean(diag_term)
                 consensus_mean.append(con_mean)
                 AvsB.append(armA_vs_armB)
                 consensus.append(armA_vs_armB_norm)
@@ -119,6 +121,7 @@ def summarize_inference(cpl_mixVAE, files, data, saving_folder='', min_c_size=0,
         # Store number of pruned indices
         n_pruned.append(len(nprune_indx))
         plt.close()
+        # pdb.set_trace()
 
     # Create dictionary to store results
     data_dic = {}
