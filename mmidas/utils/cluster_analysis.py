@@ -197,38 +197,39 @@ def K_selection(data_dict, num_category, n_arm, thr=0.95, yaxis_scale=0, plot_re
         K: number of clusters   
     """
 
-    n_comb = max(n_arm * (n_arm - 1) / 2, 1)
+    n_comb = max(n_arm * (n_arm - 1) / 2, 1) # number of arm combinations
 
     with sns.axes_style("darkgrid"):
         data_dict['num_pruned'] = np.array(data_dict['num_pruned'])
         data_dict['dc'] = np.array(data_dict['dc'])
         data_dict['d_qc'] = np.array(data_dict['d_qc'])
         data_dict['con_min'] = np.array(data_dict['con_min'])
-        data_dict['con_min'] = np.reshape(data_dict['con_min'], (int(n_comb), len(data_dict['d_qc'])))
-        data_dict['con_mean'] = np.array(data_dict['con_mean'])
-        data_dict['con_mean'] = np.reshape(data_dict['con_mean'], (int(n_comb), len(data_dict['d_qc'])))
+        data_dict['con_min'] = np.reshape(data_dict['con_min'], (len(data_dict['d_qc']),int(n_comb)))
+        data_dict['con_mean'] = np.array(data_dict['con_mean']) 
+        data_dict['con_mean'] = np.reshape(data_dict['con_mean'], (len(data_dict['d_qc']),int(n_comb),))
+        # ^ comb x K (arm 4 case is  15 x 6)
         indx = np.argsort(data_dict['num_pruned'])
         norm_aitchison_dist = data_dict['dc'] - np.min(data_dict['dc'])
-        norm_aitchison_dist = norm_aitchison_dist / np.max(norm_aitchison_dist)
-        recon_loss = []
-        norm_recon = []
-        l_recon = []
+        norm_aitchison_dist = norm_aitchison_dist / np.max(norm_aitchison_dist)  # the range of this distance is 0-1
+        recon_loss = []  # list length A, length K each elemetn
+        norm_recon = []  # same
+        l_recon = [] #  same
 
-        for a in range(n_arm):
-            recon_loss.append(np.array(data_dict['recon_loss'][a]))
+        for a in range(n_arm): # all output would be A x K (arm x cluster)
+            recon_loss.append(np.array(data_dict['recon_loss'][a]))  # data_dict['recon_loss'][a] is of length K
             # print(np.min(recon_loss[a]),  np.max(recon_loss[a]))
-            tmp = recon_loss[a] - np.min(recon_loss[a])
-            norm_recon.append(tmp / np.max(tmp))
+            tmp = recon_loss[a] - np.min(recon_loss[a])  # length K 
+            norm_recon.append(tmp / np.max(tmp))  # length K 
             l_recon.append(recon_loss[a])
 
         if n_comb == 1:
-            axis=0
-        else:
             axis=1
-        norm_recon_mean = np.mean(norm_recon, axis=0)
-        l_recon_mean = np.mean(l_recon, axis=0)
-        neg_cons = 1 - np.mean(data_dict['con_mean'], axis=axis)
-        consensus = np.mean(data_dict['con_mean'], axis=axis)
+        else:
+            axis=1  # data_dict['con_mean'] is of size 15 x 6
+        norm_recon_mean = np.mean(norm_recon, axis=0)  # mean across arms, normalized
+        l_recon_mean = np.mean(l_recon, axis=0)  # mean across arms, 
+        neg_cons = 1 - np.mean(data_dict['con_mean'], axis=axis)  # is this axis or 0? 
+        consensus = np.mean(data_dict['con_mean'], axis=axis) # 6
         mean_cost = (neg_cons + norm_recon_mean + norm_aitchison_dist) / 3 # cplmixVAE_data['d_qz']
         
         # suggest the number of clusters
@@ -240,10 +241,10 @@ def K_selection(data_dict, num_category, n_arm, thr=0.95, yaxis_scale=0, plot_re
             plot_flag = True
             ordered_rec = l_recon_mean[indx]
             ordered_cons = consensus[indx]
-            tmp_ind = np.where(ordered_cons > thr)[0]
+            tmp_ind = np.where(ordered_cons > thr)[0]  # consensus passed the threshold 
             if len(tmp_ind) == 1:
                 max_changes_indx = 0
-            else:
+            else: # If only one such index → pick it. If multiple → pick the one right after the largest jump in consensus among those indices:
                 max_changes_indx = np.where(np.diff(ordered_cons[tmp_ind]) == max(np.diff(ordered_cons[tmp_ind])))[0][0] + 1
             selected_idx = max_changes_indx
             K = data_dict['num_pruned'][indx][selected_idx] 
