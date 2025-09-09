@@ -77,11 +77,10 @@ def main(
         ):
 
     config = get_paths(toml_file=toml_file)
-    data_file_1 = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['anndata_file_1']
-    data_file_2 = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['anndata_file_2']
-    data_file_3 = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['anndata_file_3']
-    
-    gene_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['hvg_file_2']
+#     data_file_1 = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['anndata_file_1']
+#     data_file_2 = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['anndata_file_2']
+#     data_file_3 = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['anndata_file_3']  
+#     gene_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['hvg_file_2']
     
     folder_name = f'run_{n_run}_Cdim_{n_categories}_Sdim_{state_dim}_Zdim_{latent_dim}_pdrop_{p_drop}_fcdim_{fc_dim}_aug_{augmentation}' + \
                   f'_lr_{lr}_narm_{n_arm}_tau_{tau}_nbatch_{batch_size}_nepoch_{n_epoch}_nepochP_{n_epoch_p}_dataset_all'
@@ -103,7 +102,10 @@ def main(
             raise RuntimeError("No free GPU devices available.")
     else:
         device = torch.device("cpu")
-
+    print(device)
+    torch.cuda.set_device(0)
+    print(torch.cuda.get_device_name(torch.cuda.current_device()))
+    # note we are expecting A100 here 
     if augmentation:
         aug_path = config['paths']['main_dir'] / config['paths']['models']
         aug_file = aug_path / config['models']['augmenter_2']
@@ -113,8 +115,10 @@ def main(
     else:
         augmenter = []
 
-    data_files = [data_file_1, data_file_2, data_file_3]
-    data = load_data(file=data_files, gene_file=gene_file, n_gene=n_gene) 
+#     data_files = [data_file_1, data_file_2, data_file_3]
+    
+    mydatafile = '/home/shuonan.chen/scratch_shuonan/code/LC-NE-MixRep/data/snRNA_BN_norm1.h5ad'
+    data = load_data(file=mydatafile) 
 
     mixvae = cpl_mixVAE(saving_folder=saving_folder, augmenter=augmenter, device=device)
     

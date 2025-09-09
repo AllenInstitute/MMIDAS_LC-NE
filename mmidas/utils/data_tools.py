@@ -183,8 +183,10 @@ def load_data(file, gene_file='', n_gene=0):
             g_index = [np.where(genes == g)[0][0] for g in gene_list if g in genes]
             data['log1p'] = adata.X[:, g_index].toarray()
             data['gene_id'] = gene_list
-        else:
-            data['log1p'] = adata.X.toarray()
+        else:        
+            cpm_scl = 1e6
+            data['BN_raw'] = adata.X.toarray() if hasattr(adata.X, "toarray") else adata.X
+            data['log1p'] = np.log1p(cpm_scl * data['BN_raw'])
             data['gene_id'] = np.hstack(adata.var.values)
     
     if n_gene > 0:
