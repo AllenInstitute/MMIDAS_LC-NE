@@ -8,7 +8,7 @@ from mmidas.vaegan import vae_gan
 from mmidas.cplMixVAE import cpl_mixVAE
 from mmidas.utils.config_tools import get_paths
 from mmidas.utils.augmentation import get_loader as aug_loader, freeze
-from mmidas.utils.data_tools import load_data, get_loaders, Dbh_Retro_loaders
+from mmidas.utils.data_tools import load_data_raw, load_data_BN, get_loaders, Dbh_Retro_loaders
 
 
 parser = argparse.ArgumentParser()
@@ -23,6 +23,7 @@ parser.add_argument("--affine", default=False, action="store_true", help="affine
 parser.add_argument("--momentum",  default=0.01, type=float, help="momentum for batch normalization")
 parser.add_argument("--lr", default=1e-3, type=float, help="learning rate")
 parser.add_argument("--p_drop", default=0.25, type=float, help="input probability of dropout")
+
 parser.add_argument("--n_categories", default=10, type=int, help="number of cell types")
 parser.add_argument("--state_dim", default=3, type=int, help="state variable dimension")
 parser.add_argument("--n_arm", default=2, type=int,  help="number of mixVAE arms for each modalities")
@@ -34,7 +35,7 @@ parser.add_argument("--lam_pc",  default=1, type=float, help="coupling factor fo
 parser.add_argument("--ref_pc", default=False, action="store_true", help="using reference arm")
 parser.add_argument("--latent_dim", default=10, type=int, help="latent dimension")
 parser.add_argument("--n_epoch", default=10000, type=int, help="Number of epochs to train")
-parser.add_argument("--n_epoch_p", default=10000, type=int, help="Number of epochs to train pruning algorithm")
+parser.add_argument("--n_epoch_p", default=20000, type=int, help="Number of epochs to train pruning algorithm")
 parser.add_argument("--min_con", default=1., type=float, help="minimum consensus")
 parser.add_argument("--max_prun_it", default=9, type=int, help="maximum number of pruning iterations")
 parser.add_argument("--n_aug_smp", default=0, type=int, help="number of augmented samples")
@@ -51,15 +52,17 @@ parser.add_argument("--seed", default=0, type=int, help="random seed")
 parser.add_argument("--cuda", default=False, action="store_true", help="enable cuda (gpu device)")
 parser.add_argument("--toml_file", default='pyproject.toml', type=str, help="the project toml file")
 parser.add_argument("--data_file", default='Retroseq_updated', type=str, help="the data file")
-parser.add_argument("--platform", type=str, help="if you want to run the code on a specific platform, please specify it here ('Dbh' or 'Retroseq')")
-
+# parser.add_argument("--platform", type=str, help="if you want to run the code on a specific platform, please specify it here ('Dbh' or 'Retroseq')")
+parser.add_argument("--platform", default='Dbh', type=str, help="if you want to run the code on a specific platform, please specify it here ('Dbh' or 'Retroseq')")
 
 def main(args):
 
     config = get_paths(toml_file=args.toml_file)
     data_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data'][f'{args.data_file}_file']
     saving_folder = config['paths']['main_dir'] / config['paths']['saving_path']
-    data = load_data(file=data_file, n_gene=args.n_gene) 
+    # data = load_data(file=data_file, n_gene=args.n_gene) 
+    data = load_data_BN()  # or load_data_raw() if you prefer
+    n_gene = data['log1p'].shape[1]
 
     # if args.platform:
     #     indx = Dbh_Retroseq_data['dataset'] == args.platform
@@ -68,8 +71,6 @@ def main(args):
     #         if key != 'log1p' and key != 'gene_id':
     #             Dbh_Retroseq_data[key] = Dbh_Retroseq_data[key][indx]
 
-
-    n_gene = data['log1p'].shape[1]
     folder_name = f'run_{args.n_run}_Cdim_{args.n_categories}_Sdim_{args.state_dim}_Zdim_{args.latent_dim}_pdrop_{args.p_drop}_fcdim_{args.fc_dim}_aug_{args.augmentation}' + \
                   f'_naug_{args.n_aug_smp}_lr_{args.lr}_narm_{args.n_arm}_tau_{args.tau}_nbatch_{args.batch_size}_nepoch_{args.n_epoch}_nepochP_{args.n_epoch_p}_{args.data_file}'
     
@@ -128,33 +129,34 @@ def main(args):
         aug_vaegan.load_model(aug_file)
         augmenter = aug_vaegan.netA
         freeze(augmenter)
-        
+    
     else:
         augmenter = []
+    
 
-    if args.platform:
-        _, train_loader, test_loader, _, _, _ = get_loaders(
-                                                            x=data['log1p'],
-                                                            batch_size=args.batch_size, 
-                                                            n_aug_smp=args.n_aug_smp, 
-                                                            netA=augmenter.to('cpu'),
-                                                            additional_val=False,
-                                                            seed=args.seed,
-                                                            )
-    else:
-        x_Dbh = data['log1p'][data['dataset'] == 'Dbh']
-        x_Retroseq = data['log1p'][data['dataset'] == 'Retroseq'] 
-        label = data['injection_target'][data['dataset'] == 'Retroseq']
-        _, train_loader, test_loader, _, _, _ = Dbh_Retro_loaders(
-                                                                    x_Dbh=x_Dbh,
-                                                                    x_Retro=x_Retroseq,
-                                                                    batch_size=args.batch_size, 
-                                                                    label=label,
-                                                                    n_aug_smp=args.n_aug_smp, 
-                                                                    netA=augmenter.to('cpu'),
-                                                                    additional_val=False,
-                                                                    seed=args.seed,
-                                                                    )
+    # if args.platform:
+    _, train_loader, test_loader, _, _, _ = get_loaders(
+                                                        x=data['log1p'],
+                                                        batch_size=args.batch_size, 
+                                                        n_aug_smp=args.n_aug_smp, 
+                                                        netA=augmenter.to('cpu') if args.augmentation else [],
+                                                        additional_val=False,
+                                                        seed=args.seed,
+                                                        )
+    # else:
+    #     x_Dbh = data['log1p'][data['dataset'] == 'Dbh']
+    #     x_Retroseq = data['log1p'][data['dataset'] == 'Retroseq'] 
+    #     label = data['injection_target'][data['dataset'] == 'Retroseq']
+    #     _, train_loader, test_loader, _, _, _ = Dbh_Retro_loaders(
+    #                                                                 x_Dbh=x_Dbh,
+    #                                                                 x_Retro=x_Retroseq,
+    #                                                                 batch_size=args.batch_size, 
+    #                                                                 label=label,
+    #                                                                 n_aug_smp=args.n_aug_smp, 
+    #                                                                 netA=augmenter.to('cpu'),
+    #                                                                 additional_val=False,
+    #                                                                 seed=args.seed,
+    #                                                                 )
     del data
     # print(train_loader.dataset.tensors[0])
     # print(test_loader.dataset.tensors[0])

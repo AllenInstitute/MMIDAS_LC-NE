@@ -11,6 +11,7 @@ readme = "README.md"
 [paths]
 main_dir = "./"
 saving_path = "results"
+saving_path_randomseed = "results/randomseedresults/4845data"
 data_path = "data"
 models = "models"
 
@@ -28,11 +29,12 @@ hvg_all_file = "hvg_perdataset.csv"
 hvg_Dbh_seurat = "variable_genes.csv"
 # -----------------------------------------------------------------------------
 [models]
-augmenter_Dbh_Retroseq = "RNA_augmenter_Dbh_Retroseq_file_2025-02-05-11-21-27.pth"
-augmenter_Retroseq_Dbh = "RNA_augmenter_Retroseq_Dbh_file_2025-02-05-11-25-10.pth"
-augmenter_Dbh_Retroseq_nobr = "RNA_augmenter_Dbh_Retroseq_nobr_2025-02-06-15-00-51.pth"
-augmenter_Dbh_Retroseq_binary = ""
+#augmenter_Dbh_Retroseq = "RNA_augmenter_Dbh_Retroseq_file_2025-02-05-11-21-27.pth"
+#augmenter_Retroseq_Dbh = "RNA_augmenter_Retroseq_Dbh_file_2025-02-05-11-25-10.pth"
+#augmenter_Dbh_Retroseq_nobr = "RNA_augmenter_Dbh_Retroseq_nobr_2025-02-06-15-00-51.pth"
+#augmenter_Dbh_Retroseq_binary = ""
 augmenter_Retroseq = ""
-augmenter_Dbh = ""
+#augmenter_Dbh = "."
+augmenter_Dbh = "RNA_augmenter_Retroseq_updated_2026-02-20-19-46-36.pth"
 
 

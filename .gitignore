@@ -3,4 +3,10 @@ results/
 data/
 figures/
 models/
+logfiles/
+logfiles_aug/
 LC_NE_MixRep.egg-info/
+*__pycache__*
+*/__pycache__
+*.pyc
+*.ipynb_checkpoints

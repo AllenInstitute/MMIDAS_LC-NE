@@ -5,7 +5,7 @@ import torch
 from mmidas.cplMixVAE import cpl_mixVAE
 from mmidas.vaegan import vae_gan
 from mmidas.utils.config_tools import get_paths
-from mmidas.utils.data_tools import load_data, get_loaders
+from mmidas.utils.data_tools import load_data_raw,load_data_BN, get_loaders
 
 
 parser = argparse.ArgumentParser()
@@ -82,7 +82,7 @@ def main(
 #     data_file_3 = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['anndata_file_3']  
 #     gene_file = config['paths']['main_dir'] / config['paths']['data_path'] / config['data']['hvg_file_2']
     
-    folder_name = f'run_{n_run}_Cdim_{n_categories}_Sdim_{state_dim}_Zdim_{latent_dim}_pdrop_{p_drop}_fcdim_{fc_dim}_aug_{augmentation}' + \
+    folder_name = f'randomseed_{seed}_run_{n_run}_Cdim_{n_categories}_Sdim_{state_dim}_Zdim_{latent_dim}_pdrop_{p_drop}_fcdim_{fc_dim}_aug_{augmentation}' + \
                   f'_lr_{lr}_narm_{n_arm}_tau_{tau}_nbatch_{batch_size}_nepoch_{n_epoch}_nepochP_{n_epoch_p}_dataset_all'
     
     saving_folder = config['paths']['main_dir'] / config['paths']['saving_path']
@@ -92,34 +92,33 @@ def main(
     saving_folder = str(saving_folder)
     
     if cuda:
+        print("cuda is enabled")
         free_gpus = []
         for i in range(torch.cuda.device_count()):
             if torch.cuda.get_device_properties(i).total_memory - torch.cuda.memory_allocated(i) > 0:
                 free_gpus.append(i)
         if free_gpus:
             device = torch.device(f"cuda:{free_gpus[0]}")
+            print(device)
         else:
             raise RuntimeError("No free GPU devices available.")
     else:
+        print("you didnt enable cuda...")
         device = torch.device("cpu")
-    print(device)
+    print(device) 
     torch.cuda.set_device(0)
     print(torch.cuda.get_device_name(torch.cuda.current_device()))
     # note we are expecting A100 here 
     if augmentation:
         aug_path = config['paths']['main_dir'] / config['paths']['models']
-        aug_file = aug_path / config['models']['augmenter_2']
+        aug_file = aug_path / config['models']['augmenter_Dbh']
         aug_vaegan = vae_gan(saving_folder=aug_path, device=device)
         aug_vaegan.load_model(aug_file)
         augmenter = aug_vaegan.netA
     else:
         augmenter = []
 
-#     data_files = [data_file_1, data_file_2, data_file_3]
-    
-    mydatafile = '/home/shuonan.chen/scratch_shuonan/code/LC-NE-MixRep/data/snRNA_BN_norm1.h5ad'
-    data = load_data(file=mydatafile) 
-
+    data = load_data_BN()
     mixvae = cpl_mixVAE(saving_folder=saving_folder, augmenter=augmenter, device=device)
     
     _, train_loader, test_loader, _, _, _ = get_loaders(
