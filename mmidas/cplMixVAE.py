@@ -33,11 +33,12 @@ class cpl_mixVAE:
             self.device = torch.device('cpu')
             print('---> Computional node is not assigned, using CPU!')
         else:
-           try:
+            print(device)
+            try:
                 torch.cuda.set_device(self.device)
                 print('--->' + torch.cuda.get_device_name(torch.cuda.current_device()))
-           except:
-               print('---> Using CPU!')
+            except:
+                print('---> Using CPU!')
 
         if self.aug:
             self.netA = augmenter.to(self.device)
@@ -695,7 +696,7 @@ class cpl_mixVAE:
                         else:
                             predicted_label[arm, i * batch_size:min((i + 1) * batch_size, max_len)] = np.argmax(z_encoder, axis=1) + 1
 
-            else:
+            else:  # batch is 1 (test data case)
                 i = 0
                 data, data_idx = data_loader.dataset.tensors
                 data = data.to(self.device)
@@ -757,7 +758,6 @@ class cpl_mixVAE:
             data_indx = data_indx[:(i+1) * batch_size]
             recon_cell = recon_cell[:, :(i+1) * batch_size, :]
             predicted_label = predicted_label[:, :(i+1) * batch_size]
-            
             
         mean_test_rec = np.zeros(self.n_arm)
         mean_total_loss_rec = np.zeros(self.n_arm)

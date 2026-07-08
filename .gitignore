@@ -3,6 +3,7 @@ results/
 data/
 figures/
 models/
+notebooks_shuonan/
 logfiles/
 logfiles_aug/
 LC_NE_MixRep.egg-info/
