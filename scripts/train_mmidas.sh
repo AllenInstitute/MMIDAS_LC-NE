@@ -8,6 +8,8 @@
 
 source ~/.bashrc
 
-conda activate mixrep2
+conda activate mmidas
 
-python train_mixvae.py  --tau 0.1 --state_dim 2 --device 0 
+python train_mmidas.py  --tau 0.1 \
+                        --state_dim 2 \
+                         --cuda
