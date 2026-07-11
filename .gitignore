@@ -4,3 +4,26 @@ data/
 figures/
 models/
 LC_NE_MixRep.egg-info/
+
+
+# Python
+__pycache__/
+__int__.py
+
+*.toml
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Caches
+.cache/
+.claude/
+
+# Logs
+*.log
+
+# Environment
+.env
+*.env
