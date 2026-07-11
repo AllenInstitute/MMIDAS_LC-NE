@@ -187,19 +187,19 @@ All scripts are run from the repository root.
 **Train the RNA data augmenter (VAE-GAN):**
 
 ```bash
-python train_augmenter.py --cuda --n_epoch 20000
+python train/train_augmenter.py --cuda --n_epoch 20000
 ```
 
 **Train the coupled mixture VAE (MMIDAS):**
 
 ```bash
-python train_mmidas.py --n_categories 15 --state_dim 2 --tau 0.1 --cuda
+python train/train_mmidas.py --n_categories 15 --state_dim 2 --tau 0.1 --cuda
 ```
 
 **Submit a training job to SLURM:**
 
 ```bash
-sbatch scripts/train_mmidas.sh
+sbatch train/scripts/train_mmidas.sh
 ```
 
 The `notebooks/` directory contains notebooks for validating the augmenter and inspecting the learned MMIDAS representation.
@@ -211,29 +211,31 @@ The `notebooks/` directory contains notebooks for validating the augmenter and i
 ```text
 LC-NE-MixRep/
 ├── README.md
+├── LICENSE
 ├── requirements.txt
 ├── setup.py
-├── train_augmenter.py             # train the VAE-GAN data augmenter
-├── train_mmidas.py                # train the coupled mixture VAE (MMIDAS)
-├── train_aug_mmidas.py            # joint augmenter + MMIDAS training
-├── scripts/
-│   └── train_mmidas.sh            # SLURM submission script
+├── train/
+│   ├── train_augmenter.py             # train the VAE-GAN data augmenter
+│   ├── train_mmidas.py                # train the coupled mixture VAE (MMIDAS)
+│   ├── train_aug_mmidas.py            # joint augmenter + MMIDAS training
+│   └── scripts/
+│       └── train_mmidas.sh            # SLURM submission script
 ├── notebooks/
-│   ├── 1_validate_augmenter.ipynb # validate the VAE-GAN augmenter
-│   └── 2_validate_mmidas.ipynb    # inspect the learned MMIDAS representation
+│   ├── 1_validate_augmenter.ipynb     # validate the VAE-GAN augmenter
+│   └── 2_validate_mmidas.ipynb        # inspect the learned MMIDAS representation
 └── mmidas/
     ├── __init__.py
-    ├── cplMixVAE.py               # coupled mixture VAE (core model)
-    ├── networks_mixvae.py         # mixture VAE network definitions
-    ├── networks_aug.py            # augmenter network definitions
-    ├── vaegan.py                  # VAE-GAN augmenter
-    ├── eval.py                    # evaluation utilities
+    ├── cplMixVAE.py                   # coupled mixture VAE (core model)
+    ├── networks_mixvae.py             # mixture VAE network definitions
+    ├── networks_aug.py                # augmenter network definitions
+    ├── vaegan.py                      # VAE-GAN augmenter
+    ├── eval.py                        # evaluation utilities
     └── utils/
-        ├── augmentation.py        # augmentation + data loaders
-        ├── batch_removal.py       # batch-effect correction
-        ├── cluster_analysis.py    # cluster / consensus analysis
-        ├── config_tools.py        # loads the project .toml
-        └── data_tools.py          # data loading and dataloaders
+        ├── augmentation.py            # augmentation + data loaders
+        ├── batch_removal.py           # batch-effect correction
+        ├── cluster_analysis.py        # cluster / consensus analysis
+        ├── config_tools.py            # loads the project .toml
+        └── data_tools.py              # data loading and dataloaders
 ```
 
 ---
@@ -241,6 +243,12 @@ LC-NE-MixRep/
 ## Data
 
 _Data availability will be added here._
+
+---
+
+## License
+
+This project is licensed under the terms specified in the [LICENSE](LICENSE) file.
 
 ---
 
@@ -261,12 +269,3 @@ _LC-NE paper will be added here._
 }
 ```
 
----
-
-## License
-
-Allen Institute Software License — this software license is the 2-clause BSD license plus a third clause that prohibits redistribution and use for commercial purposes without further permission.
-
-Copyright © 2024. Allen Institute. All rights reserved.
-
-See the [LICENSE](LICENSE) file for the full terms. For commercial licensing opportunities, contact terms@alleninstitute.org.
