@@ -1,11 +1,11 @@
 # LC-NE-MixRep
-
-Learning mixture-based representations of locus coeruleus noradrenergic (**LC-NE**) neurons with **MMIDAS** (Mixture Model Inference with Discrete-coupled AutoencoderS).
-
 ![Python](https://img.shields.io/badge/python-3.9-blue?logo=python)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.4.0-red?logo=pytorch)
 ![CUDA](https://img.shields.io/badge/CUDA-12.8-important?logo=nvidia)
 ![OS](https://img.shields.io/badge/Linux-Ubuntu-orange?logo=linux)
+
+
+Learning mixture-based representations of locus coeruleus noradrenergic (**LC-NE**) neurons with **MMIDAS** (Mixture Model Inference with Discrete-coupled AutoencoderS).
 
 This repository applies MMIDAS to single-cell/single-nucleus transcriptomic data from LC-NE neurons in order to jointly infer discrete cell types and the continuous, type-specific variability within them.
 
@@ -13,20 +13,19 @@ This repository applies MMIDAS to single-cell/single-nucleus transcriptomic data
 
 ## Method
 
-The analysis is built on **MMIDAS** — a generalized, unsupervised mixture variational model with a multi-armed deep neural network that jointly infers **discrete cell types** and **continuous type-specific variability** from single-cell datasets (uni- or multi-modal).
+The analysis is built on [**MMIDAS**]((https://www.nature.com/articles/s43588-024-00683-8)), a generalized, unsupervised mixture variational model with a multi-armed deep neural network that jointly infers **discrete cell types** and **continuous type-specific variability** from single-cell datasets (uni- or multi-modal).
 
-Here, MMIDAS is used to learn a **mixture-based representation** of LC-NE neurons, where:
+Here, MMIDAS is used to learn a mixture-based representation of LC-NE neurons, where:
 
-- a **categorical (discrete) latent variable** captures cell-type identity, and
-- a **continuous state latent variable** captures within-type variability.
+- a categorical (discrete) latent variable captures cell-type identity, 
+- a continuous state latent variable captures within-type variability.
 
 Two coupled autoencoder *arms* are trained on augmented views of the data (produced by a VAE-GAN augmenter) and encouraged to reach a consensus assignment, which stabilizes the inferred categories and enables an automatic pruning of redundant types.
 
-The MMIDAS method and reference implementation live in a separate repository:
+The reference implementation of MMIDAS is maintained in a separate repository:
 
 > **MMIDAS** — https://github.com/AllenInstitute/MMIDAS
 
-See [Citing](#citing) for the corresponding publication.
 
 ---
 
@@ -237,8 +236,6 @@ LC-NE-MixRep/
         └── data_tools.py          # data loading and dataloaders
 ```
 
-> Datasets, figures, trained models, and results are written to `data/`, `figures/`, `models/`, and `results/`. These directories are git-ignored and are not part of the tracked tree.
-
 ---
 
 ## Data
@@ -249,18 +246,27 @@ _Data availability will be added here._
 
 ## Citing
 
-This repository builds on MMIDAS. If you use it, please cite the MMIDAS paper:
+_LC-NE paper will be added here._
 
 ```bibtex
-@article{marghi2024joint,
-  title   = {Joint inference of discrete cell types and continuous type-specific
-             variability in single-cell datasets with MMIDAS},
-  author  = {Marghi, Yeganeh and Gala, Rohan and Baftizadeh, Fahimeh and S{\"u}mb{\"u}l, Uygar},
-  journal = {Nature Computational Science},
-  volume  = {4},
-  number  = {9},
-  pages   = {706--722},
-  year    = {2024},
+@article{xxxx,
+  title   = {xxx},
+  author  = {authors},
+  journal = {Nature},
+  volume  = {xx},
+  number  = {xx},
+  pages   = {xxx},
+  year    = {xxx},
   publisher = {Nature Publishing Group US New York}
 }
 ```
+
+---
+
+## License
+
+Allen Institute Software License — this software license is the 2-clause BSD license plus a third clause that prohibits redistribution and use for commercial purposes without further permission.
+
+Copyright © 2024. Allen Institute. All rights reserved.
+
+See the [LICENSE](LICENSE) file for the full terms. For commercial licensing opportunities, contact terms@alleninstitute.org.
