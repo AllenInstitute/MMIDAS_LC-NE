@@ -1,4 +1,4 @@
-# LC-NE-MixRep
+# MMIDAS_LC-NE
 ![Python](https://img.shields.io/badge/python-3.9-blue?logo=python)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.4.0-red?logo=pytorch)
 ![CUDA](https://img.shields.io/badge/CUDA-12.8-important?logo=nvidia)
