@@ -164,7 +164,7 @@ def load_data_raw(file='data/snRNAseq_LCNE_BN_d4_1-5k.h5ad',
     data['raw'] = adata.X.toarray() if hasattr(adata.X, "toarray") else adata.X
     data['normed'] = data['raw']/np.sum(data['raw'],1)[:,None]
     data['log1p'] = np.log1p(cpm_scl * data['normed'])
-    data['gene_id'] = np.hstack(adata.var.values)    
+    data['gene_id'] = adata.var_names
     for key in adata.obs.keys():
         data[key] = adata.obs[key].values
         if key == 'sex':
