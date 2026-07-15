@@ -116,7 +116,9 @@ def main(
         aug_vaegan = vae_gan(saving_folder=aug_path, device=device)
         aug_vaegan.load_model(aug_file)
         augmenter = aug_vaegan.netA
-    else:
+        for p in augmenter.parameters():
+            p.requires_grad_(False)
+        augmenter.eval()
         augmenter = []
 
     data = load_data_BN()
