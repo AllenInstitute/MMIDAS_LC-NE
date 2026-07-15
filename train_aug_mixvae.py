@@ -114,7 +114,7 @@ def main(args):
                                         tag=args.tag,
                                         )
         else:
-            aug_model = aug_path / config['models'][f'augmenter_{args.platform}']
+            aug_model = config['models'][f'augmenter_{args.platform}']
         
         aug_file = aug_path / aug_model
         aug_vaegan.load_model(aug_file)
