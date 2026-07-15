@@ -1,0 +1,22 @@
+# -----------------------------------------------------------------------------
+[project]
+name = "LC-NE-MixRep"
+version = "0.1.1"
+requires-python = ">= 3.9"
+#requires-pytorch = ">= 2.0"
+
+readme = "README.md"
+
+# -----------------------------------------------------------------------------
+[paths]
+main_dir = "./"
+saving_path = "results"
+saving_path_randomseed = "results/randomseedresults/4845data"
+data_path = "data"
+models = "models"
+
+# -----------------------------------------------------------------------------
+[models]
+# Pre-trained augmenter used by the snRNA (Dbh) two-arm pipeline.
+# See the Data availability note in notebooks/00b for how to obtain this file.
+augmenter_Dbh = "RNA_augmenter_Dbh_2026-02-20-19-46-36.pth"

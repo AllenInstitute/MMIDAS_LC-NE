@@ -31,21 +31,6 @@ def normalize_cellxgene(x):
     return normalize(x, axis=1, norm='l1')
 
 
-
-def logcpm(x, scaler=1e4) -> np.array:
-    """ Log CPM normalization
-
-    inpout args
-        x (np.array): cell x gene matrix (cells along axis=0, genes along axis=1)
-        scaler (float, optional): scaling factor for log CPM
-    
-    return 
-        normalized log CPM gene expression matrix
-    """
-    return np.log1p(normalize_cellxgene(x) * scaler)
-
-
-
 def sparse_std(x, axis=None):
     x_ = x.copy()
     x_.data **= 2
@@ -153,53 +138,90 @@ def split_data_Kfold(class_label, K_fold):
 
 
 
-def load_data(file, gene_file='', n_gene=0):
-
-    if gene_file:
-        df_ = pd.read_csv(gene_file)
-        for key in df_.keys():
-            # check key include gene in the name
-            if 'gene' in key.lower():
-                gene_list = df_[key].values
-                break
+def load_data_BN(file='data/snRNA_BN_norm1.h5ad',
+                 cpm_scl = 1e+6):
+    print(f'defined CPM scalar is {cpm_scl}')
     data = dict()     
-    if isinstance(file, list):
-        X = []
-        for f in file:
-            adata = sc.read_h5ad(f)
-            genes = adata.var.index.values
-            g_index = [np.where(genes == g)[0][0] for g in gene_list if g in genes]
-            X.append(adata.X[:, g_index].toarray())
-        
-        try:
-            data['log1p'] = np.vstack(X)
-            data['gene_id'] = gene_list
-        except:
-            print("--------> Cannot combine dataset! <--------")
-    else:
-        adata = sc.read_h5ad(file)
-        genes = adata.var.index.values
-        if gene_file:
-            g_index = [np.where(genes == g)[0][0] for g in gene_list if g in genes]
-            data['log1p'] = adata.X[:, g_index].toarray()
-            data['gene_id'] = gene_list
-        else:
-            data['log1p'] = adata.X.toarray()
-            data['gene_id'] = np.hstack(adata.var.values)
-    
-    if n_gene > 0:
-        data['log1p'] = data['log1p'][:, :n_gene]
-        data['gene_id'] = data['gene_id'][:n_gene]
-    
-    if not isinstance(file, list):
-        for key in adata.obs.keys():
-            data[key] = adata.obs[key].values
-            if key == 'sex':
-                data[key] = np.array([s.split(';')[0] for s in data[key]])
-            
+    adata = sc.read_h5ad(file)
+    genes = adata.var.index.values
+    data['BN_raw'] = adata.X.toarray() if hasattr(adata.X, "toarray") else adata.X
+    data['log1p'] = np.log1p(cpm_scl * data['BN_raw'])
+    data['gene_id'] = adata.var_names
+    for key in adata.obs.keys():
+        data[key] = adata.obs[key].values
+        if key == 'sex':
+            data[key] = np.array([s.split(';')[0] for s in data[key]])            
     print(f"Number of cells: {data['log1p'].shape[0]}, Number of genes: {data['log1p'].shape[1]}")
-
     return data
+
+
+def load_data_raw(file='data/snRNAseq_LCNE_BN_d4_1-5k.h5ad',
+                 cpm_scl = 1e+6):
+    print(f'defined CPM scalar is {cpm_scl}')
+    data = dict()     
+    adata = sc.read_h5ad(file)
+    genes = adata.var.index.values
+    data['raw'] = adata.X.toarray() if hasattr(adata.X, "toarray") else adata.X
+    data['normed'] = data['raw']/np.sum(data['raw'],1)[:,None]
+    data['log1p'] = np.log1p(cpm_scl * data['normed'])
+    data['gene_id'] = np.hstack(adata.var.values)    
+    for key in adata.obs.keys():
+        data[key] = adata.obs[key].values
+        if key == 'sex':
+            data[key] = np.array([s.split(';')[0] for s in data[key]])            
+    print(f"Number of cells: {data['log1p'].shape[0]}, Number of genes: {data['log1p'].shape[1]}")
+    return data
+
+
+# def load_data(file, gene_file='', n_gene=0,cpm_scl = 1e+6):
+#     print(f'defined CPM scalar is {cpm_scl}')
+#     if gene_file:
+#         df_ = pd.read_csv(gene_file)
+#         for key in df_.keys():
+#             # check key include gene in the name
+#             if 'gene' in key.lower():
+#                 gene_list = df_[key].values
+#                 break
+#     data = dict()     
+#     if isinstance(file, list):
+#         X = []
+#         for f in file:
+#             adata = sc.read_h5ad(f)
+#             genes = adata.var.index.values
+#             g_index = [np.where(genes == g)[0][0] for g in gene_list if g in genes]
+#             X.append(adata.X[:, g_index].toarray())
+        
+#         try:
+#             data['log1p'] = np.vstack(X)
+#             data['gene_id'] = gene_list
+#         except:
+#             print("--------> Cannot combine dataset! <--------")
+#     else:  # its h5ad object !
+#         adata = sc.read_h5ad(file)
+#         genes = adata.var.index.values
+#         if gene_file:
+#             g_index = [np.where(genes == g)[0][0] for g in gene_list if g in genes]
+#             data['log1p'] = adata.X[:, g_index].toarray()
+#             data['gene_id'] = gene_list
+#         else:                    
+            
+#             data['BN_raw'] = adata.X.toarray() if hasattr(adata.X, "toarray") else adata.X
+#             data['log1p'] = np.log1p(cpm_scl * data['BN_raw'])
+#             data['gene_id'] = np.hstack(adata.var.values)
+    
+#     if n_gene > 0:
+#         data['log1p'] = data['log1p'][:, :n_gene]
+#         data['gene_id'] = data['gene_id'][:n_gene]
+    
+#     if not isinstance(file, list):
+#         for key in adata.obs.keys():
+#             data[key] = adata.obs[key].values
+#             if key == 'sex':
+#                 data[key] = np.array([s.split(';')[0] for s in data[key]])
+            
+#     print(f"Number of cells: {data['log1p'].shape[0]}, Number of genes: {data['log1p'].shape[1]}")
+
+#     return data
 
 
 
@@ -268,7 +290,7 @@ def get_loaders(x, label=[], batch_size=128, train_size=0.9, n_aug_smp=0, netA=N
     test_set_torch = torch.FloatTensor(test_set)
     test_ind_torch = torch.FloatTensor(test_ind)
     test_data = TensorDataset(test_set_torch, test_ind_torch)
-    test_loader = DataLoader(test_data, batch_size=1, shuffle=True, drop_last=False, pin_memory=True)
+    test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=True, drop_last=False, pin_memory=True)
 
     data_set_troch = torch.FloatTensor(x)
     all_ind_torch = torch.FloatTensor(range(x.shape[0]))
