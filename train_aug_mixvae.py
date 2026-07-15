@@ -40,7 +40,7 @@ parser.add_argument("--min_con", default=1., type=float, help="minimum consensus
 parser.add_argument("--max_prun_it", default=9, type=int, help="maximum number of pruning iterations")
 parser.add_argument("--n_aug_smp", default=0, type=int, help="number of augmented samples")
 parser.add_argument("--fc_dim", default=100, type=int, help="number of nodes at the hidden layers")
-parser.add_argument("--variational", default=True, help="enable variational mode")
+parser.add_argument("--variational", default=True, action=argparse.BooleanOptionalAction, help="enable variational mode")
 parser.add_argument("--augmentation", default=False, action="store_true", help="enable VAE-GAN augmentation")
 parser.add_argument("--s_drop", default=0.0, type=float, help="state probability of dropout")
 parser.add_argument("--n_run", default=7, type=int, help="number of the experiment")
