@@ -85,7 +85,7 @@ def main(
     folder_name = f'randomseed_{seed}_run_{n_run}_Cdim_{n_categories}_Sdim_{state_dim}_Zdim_{latent_dim}_pdrop_{p_drop}_fcdim_{fc_dim}_aug_{augmentation}' + \
                   f'_lr_{lr}_narm_{n_arm}_tau_{tau}_nbatch_{batch_size}_nepoch_{n_epoch}_nepochP_{n_epoch_p}_dataset_all'
     
-    saving_folder = config['paths']['main_dir'] / config['paths']['saving_path']
+    saving_folder = config['paths']['main_dir'] / config['paths']['saving_path_randomseed']
     saving_folder = saving_folder / folder_name
     os.makedirs(saving_folder, exist_ok=True)
     os.makedirs(saving_folder / 'model', exist_ok=True)
