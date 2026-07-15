@@ -105,9 +105,10 @@ def main(
     else:
         print("you didnt enable cuda...")
         device = torch.device("cpu")
-    print(device) 
-    torch.cuda.set_device(0)
-    print(torch.cuda.get_device_name(torch.cuda.current_device()))
+    print(device)
+    if device.type == "cuda":
+        torch.cuda.set_device(device.index)
+        print(torch.cuda.get_device_name(device.index))
     # note we are expecting A100 here 
     if augmentation:
         aug_path = config['paths']['main_dir'] / config['paths']['models']
