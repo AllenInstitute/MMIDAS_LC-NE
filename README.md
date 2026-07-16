@@ -242,7 +242,7 @@ LC-NE-MixRep/
 
 ## Data
 
-_Data availability will be added here._
+The source file data/snRNAseq_LCNE_BN_d4_1-5k.h5ad is not stored in git. [Download it from Code Ocean](https://codeocean.allenneuraldynamics.org/data-assets/915f30e7-324d-4ed5-a520-5509a6e54f87/LCNE-transcriptomics-preprocessing_2026-07-08_16-23-00) and place it under `data/` 
 
 ---
 
